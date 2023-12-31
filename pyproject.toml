@@ -18,8 +18,9 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Software Development :: Libraries",
     "Topic :: Utilities",
 ]
 requires-python = ">=3.7"
-requires = ["beautifulsoup4>=4.11.0", "requests>=2.28.0"]
+requires = ["beautifulsoup4>=4.11.0", "requests>=2.28.0", "tenacity>=8.2.0"]
