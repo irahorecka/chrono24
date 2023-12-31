@@ -13,6 +13,7 @@ from chrono24.session import get_html, get_response
 
 BASE_URL = "https://chrono24.com"
 NULL_VALUE = "null"
+RE_PATTERN_COMMA_SEPARATED_NUM = r"\b\d{1,3}(?:,\d{3})*\b"
 
 
 def get_text_html_tag_or_null(html_tag):
@@ -25,6 +26,20 @@ def get_text_html_tag_or_null(html_tag):
         str: The text content of the HTML tag, or NULL_VALUE if the tag is None or has no text.
     """
     html_tag_text = html_tag.text.strip() if html_tag else ""
+    return html_tag_text or NULL_VALUE
+
+
+def get_text_html_tag_attr_or_null(html_tag, attr):
+    """Get the attribute text from an HTML tag or return NULL_VALUE if the tag is None or has no text.
+
+    Args:
+        html_tag (bs4.element.Tag or None): The HTML tag to extract text from.
+        attr (str): Attribute to find in the HTML tag.
+
+    Returns:
+        str: The attribute text content of the HTML tag, or NULL_VALUE if the tag is None or has no text.
+    """
+    html_tag_text = html_tag[attr].strip() if html_tag else ""
     return html_tag_text or NULL_VALUE
 
 
@@ -75,7 +90,7 @@ class chrono24:
         Yields:
             Listing: A processed listing obtained from the search results.
         """
-        # Get HTML content for the first page to find total page count for query
+        # Get HTML content for the first listings page to find total page count for a query
         request_attrs = {
             "pageSize": self.page_size,  # Number of listings per results page
             "showPage": 1,  # What page to view
@@ -83,16 +98,15 @@ class chrono24:
         }
         listings = self._get_listings(**request_attrs)
         total_page_count = self._get_total_page_count(listings)
-        if not total_page_count:
-            return
-        # Iterate through all pages and yield individual listings as JSON
+        # Iterate through all listings pages and yield individual listings
         num_listings_yielded = 0
         for page_number in range(1, total_page_count + 1):
-            # First page of query URL already declared - simply yield its listings
+            # First page of listings URL is already declared - simply yield its listings
             if page_number != 1:
                 request_attrs["showPage"] = page_number
                 listings = self._get_listings(**request_attrs)
             for listing in listings:
+                # Check if user-specified limit is reached
                 if limit and num_listings_yielded >= limit:
                     return
                 yield get_listing(listing)
@@ -112,7 +126,7 @@ class chrono24:
         """
         try:
             return listings.total_listings_count // self.page_size + 1
-        # Unable to get total listing count because of invalid query
+        # Unable to get total listing count because of an invalid query
         except AttributeError as e:
             raise NoListingsFoundException(f"'{self.query}' is not a valid query.") from e
 
@@ -125,15 +139,19 @@ class chrono24:
         Returns:
             Listings: A Listings object containing the fetched listings.
         """
+        # Construct initial query URL
         query_url = self.base_query_url + self.query.replace(" ", "+")
+        # Chrono24 will modify the initial query URL - add URL attributes to the modified URL
         response_url = get_response(query_url).url + self._join_attrs(**kwargs)
         page_number = kwargs.get("showPage", 1)
+        # Further modify URL if seeking listings page > 1
         if page_number != 1:
             response_url = response_url.replace("index.htm", f"index-{page_number}.htm")
 
         return Listings(get_html(response_url))
 
-    def _get_standard_listing(self, listing):
+    @staticmethod
+    def _get_standard_listing(listing):
         """Get the standard JSON representation of a listing.
 
         Args:
@@ -144,7 +162,8 @@ class chrono24:
         """
         return listing.json
 
-    def _get_detailed_listing(self, listing):
+    @staticmethod
+    def _get_detailed_listing(listing):
         """Get a detailed JSON representation of a listing by combining its standard JSON
         with additional details fetched from its URL.
 
@@ -190,9 +209,11 @@ class Listings:
         Raises:
             NoListingsFoundException: Raised when no listings are found in the HTML content.
         """
+        # Attempt to find listings
         listings_div = self.html.find("div", {"id": "wt-watches"})
         if not listings_div:
             raise NoListingsFoundException("No listings were found.")
+        # Yield individual listings as found in listings page
         listings = listings_div.find_all("a", {"class": "js-article-item"})
         for listing in listings:
             yield StandardListing(listing)
@@ -207,11 +228,10 @@ class Listings:
         Notes:
             If the total count of listings cannot be found or parsed from the HTML content, returns 0.
         """
-        re_pattern_comma_sep_num = r"\b\d{1,3}(?:,\d{3})*\b"
         listings_count_text = get_text_html_tag_or_null(
             self.html.find("div", {"class": "h1 m-b-0 m-t-0"})
         )
-        match = re.search(re_pattern_comma_sep_num, listings_count_text)
+        match = re.search(RE_PATTERN_COMMA_SEPARATED_NUM, listings_count_text)
         # Return total listing count as integer, otherwise 0
         return int(match.group().replace(",", "")) if match else 0
 
@@ -236,10 +256,12 @@ class StandardListing:
             dict: A dictionary containing the extracted listing information.
         """
         return {
-            "id": self.html["data-article-id"].strip(),
-            "url": BASE_URL + self.html["href"].strip(),
-            "manufacturer": self.html["data-manufacturer"].strip(),
-            "certification_status": self.html["data-watch-certification-status"].strip(),
+            "id": get_text_html_tag_attr_or_null(self.html, "data-article-id"),
+            "url": BASE_URL + get_text_html_tag_attr_or_null(self.html, "href"),
+            "manufacturer": get_text_html_tag_attr_or_null(self.html, "data-manufacturer"),
+            "certification_status": get_text_html_tag_attr_or_null(
+                self.html, "data-watch-certification-status"
+            ),
             "title": get_text_html_tag_or_null(
                 self.html.find("div", {"class": "text-bold text-ellipsis"})
             ),
@@ -263,11 +285,11 @@ class StandardListing:
         Returns:
             str: The shipping price extracted from the content, formatted as a string ('$X' format).
         """
+        # Extract comma-separated shipping price
         shipping_price_text = get_text_html_tag_or_null(
             self.html.find("div", {"class": "text-muted text-sm"})
         )
-        re_pattern_shipping_cost = r"\b\d{1,3}(?:,\d{3})*\b"
-        match = re.search(re_pattern_shipping_cost, shipping_price_text)
+        match = re.search(RE_PATTERN_COMMA_SEPARATED_NUM, shipping_price_text)
         return f'${match.group() if match else "0"}'
 
     @property
@@ -278,14 +300,19 @@ class StandardListing:
         Returns:
             tuple: A tuple containing the location and merchant name extracted from the content.
         """
-        location = self.html.find("button", {"class": "js-tooltip"})["data-content"].strip()
+        location = get_text_html_tag_attr_or_null(
+            self.html.find("button", {"class": "js-tooltip"}), "data-content"
+        )
+        # Possible merchant names found in listings page
         merchant_names = {"Dealer", "Private Seller"}
         for merchant_name in merchant_names:
+            # Return simplified location and seller if a location is successfully simplified
             to_replace = f"This {merchant_name.lower()} is from "
             if to_replace in location:
                 return location.replace(to_replace, ""), merchant_name
 
-        return NULL_VALUE, NULL_VALUE
+        # No merchant was found - return full location
+        return location, NULL_VALUE
 
     @property
     def _image_urls(self):
@@ -296,7 +323,7 @@ class StandardListing:
         """
         image_divs = self.html.find_all("div", {"class": "js-carousel-cell"})
         return [
-            image_div.find("img")["data-lazy-sweet-spot-master-src"]
+            get_text_html_tag_attr_or_null(image_div.find("img"), "data-lazy-sweet-spot-master-src")
             .lower()
             .replace("square_size_", "ExtraLarge")
             for image_div in image_divs
@@ -309,9 +336,8 @@ class StandardListing:
         Returns:
             str: The badge information related to the listing.
         """
-        return get_text_html_tag_or_null(
-            self.html.find("span", {"class": "article-item-article-badge"})
-        )
+        badge = self.html.find("span", {"class": "article-item-article-badge"})
+        return get_text_html_tag_or_null(badge)
 
 
 class DetailedListing:
@@ -343,16 +369,19 @@ class DetailedListing:
         """
         product_details = {}
         for tbody in self.html.find_all("tbody"):
+            # Each table row is a description, with some exceptions (see below)
             tr_tds = [tr.find_all("td") for tr in tbody.find_all("tr")]
             for idx, tds in enumerate(tr_tds):
+                # Get description key
                 key = get_text_html_tag_or_null(tds[0]).lower().replace(" ", "_")
                 # Check if `tds` of length 1 is a header above description column or description body
                 if len(tds) == 1:
-                    # We want to add description bodies with headers
+                    # We want to map description bodies with their headers; description columns will
+                    # have `tds` of length 2
                     if idx + 1 != len(tr_tds) and len(tr_tds[idx + 1]) == 1:
                         product_details[key] = self._tidy_product_detail(tr_tds[idx + 1][0])
                     continue
-                # Add description column key to description
+                # Assign detail found in description column
                 product_details[key] = self._tidy_product_detail(tds[1])
 
         return product_details
@@ -368,6 +397,8 @@ class DetailedListing:
             str: The cleaned-up product detail text.
         """
         product_detail = get_text_html_tag_or_null(td).replace("\n", " ")
+        # Add statements as necessary to tidy possible product detail values
+        # Simplify case diameter value
         product_detail = product_detail.replace("Try it on", "").strip()
         return product_detail
 
@@ -378,7 +409,6 @@ class DetailedListing:
         Returns:
             dict: A dictionary containing various logistical details of the listing.
         """
-        # Get additional payment / dealer specs
         return {
             "availabe_payments": self._available_payments,
             "anticipated_delivery": self._anticipated_delivery,
@@ -398,12 +428,14 @@ class DetailedListing:
         available_payments = []
         payment_keywords = {"visa", "mastercard", "american-express", "bankwire", "affirm"}
         for payment in self.html.find_all("i", {"class": "payment-icon"}):
+            # Available payments will be found in the payment attributes class
             payment_class = "".join(payment.get("data-lazy-class", payment.get("class", [])))
             for keyword in payment_keywords:
                 if keyword in payment_class:
                     available_payments.append(keyword)
                     break
 
+        # Duplicate payment keywords may exist - only keep unique keywords
         return sorted(set(available_payments))
 
     @property
