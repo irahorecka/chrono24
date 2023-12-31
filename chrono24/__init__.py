@@ -6,6 +6,7 @@ chrono24
 import sys
 
 from chrono24.api import chrono24
+from chrono24.exceptions import NoListingsFoundException, RequestException
 
 
 class module_call:
