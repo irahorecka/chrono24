@@ -8,9 +8,9 @@ BASE_URL = "https://chrono24.com"
 NULL_VALUE = "null"
 
 
-def get_attr_text_or_null(attr):
-    attr_text = attr.text.strip() if attr else ""
-    return attr_text or NULL_VALUE
+def get_html_tag_text_or_null(html_tag):
+    html_tag_text = html_tag.text.strip() if html_tag else ""
+    return html_tag_text or NULL_VALUE
 
 
 class chrono24:
@@ -91,7 +91,7 @@ class Listings:
     @property
     def total_listing_count(self):
         re_pattern_comma_sep_num = r"\b\d{1,3}(?:,\d{3})*\b"
-        listing_count_text = get_attr_text_or_null(
+        listing_count_text = get_html_tag_text_or_null(
             self.html.find("div", {"class": "h1 m-b-0 m-t-0"})
         )
         match = re.search(re_pattern_comma_sep_num, listing_count_text)
@@ -112,13 +112,13 @@ class StandardListing:
                 "url": BASE_URL + self.html["href"].strip(),
                 "manufacturer": self.html["data-manufacturer"].strip(),
                 "certification_status": self.html["data-watch-certification-status"].strip(),
-                "title": get_attr_text_or_null(
+                "title": get_html_tag_text_or_null(
                     self.html.find("div", {"class": "text-bold text-ellipsis"})
                 ),
-                "description": get_attr_text_or_null(
+                "description": get_html_tag_text_or_null(
                     self.html.find("div", {"class": "text-ellipsis m-b-2"})
                 ),
-                "price": get_attr_text_or_null(
+                "price": get_html_tag_text_or_null(
                     (lambda x: x.parent if x else x)(self.html.find("span", {"class": "currency"}))
                 ),
             },
@@ -130,7 +130,7 @@ class StandardListing:
 
     @property
     def _shipping_price(self):
-        shipping_price_text = get_attr_text_or_null(
+        shipping_price_text = get_html_tag_text_or_null(
             self.html.find("div", {"class": "text-muted text-sm"})
         )
         re_pattern_shipping_cost = r"\b\d{1,3}(?:,\d{3})*\b"
@@ -163,7 +163,7 @@ class StandardListing:
     @property
     def _badge(self):
         return {
-            "badge": get_attr_text_or_null(
+            "badge": get_html_tag_text_or_null(
                 self.html.find("span", {"class": "article-item-article-badge"})
             )
         }
@@ -186,14 +186,14 @@ class DetailedListing:
                 if len(tds) < 2:
                     continue
                 product_details[
-                    get_attr_text_or_null(tds[0]).lower().replace(" ", "_")
+                    get_html_tag_text_or_null(tds[0]).lower().replace(" ", "_")
                 ] = self._tidy_product_detail(tds[1])
 
         return product_details
 
     @staticmethod
     def _tidy_product_detail(td):
-        product_detail = get_attr_text_or_null(td).replace("\n", " ")
+        product_detail = get_html_tag_text_or_null(td).replace("\n", " ")
         product_detail = product_detail.replace("Try it on", "").strip()
         return product_detail
 
@@ -225,22 +225,22 @@ class DetailedListing:
     @property
     def _anticipated_delivery(self):
         anticipated_delivery = self.html.find("span", {"class": "js-shipping-time"})
-        return get_attr_text_or_null(anticipated_delivery).replace("Anticipated delivery: ", "")
+        return get_html_tag_text_or_null(anticipated_delivery).replace("Anticipated delivery: ", "")
 
     @property
     def _merchant_name(self):
         merchant_name = self.html.find("button", {"class": "js-link-merchant-name"})
-        return get_attr_text_or_null(merchant_name)
+        return get_html_tag_text_or_null(merchant_name)
 
     @property
     def _merchant_rating(self):
         rating = self.html.find("span", {"class": "rating"})
-        return get_attr_text_or_null(rating)
+        return get_html_tag_text_or_null(rating)
 
     @property
     def _merchant_reviews(self):
         num_reviews = self.html.find("button", {"class": "js-link-merchant-reviews"})
-        return get_attr_text_or_null(num_reviews)
+        return get_html_tag_text_or_null(num_reviews)
 
     @property
     def _merchant_badges(self):
@@ -249,7 +249,7 @@ class DetailedListing:
             item_html = BeautifulSoup(item.get("data-content"))
             item_badge = item_html.find("span", {"class": ""})
             if item_badge:
-                badges.append(get_attr_text_or_null(item_badge))
+                badges.append(get_html_tag_text_or_null(item_badge))
 
         return badges
 
