@@ -21,7 +21,7 @@ HEADERS = {
     "sec-fetch-dest": "empty",
     "sec-fetch-mode": "cors",
     "sec-fetch-site": "same-origin",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.82 Safari/537.36",
+    "user-agent": "Mozilla/5.0 (Windows NT 8.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.82 Safari/537.36",
 }
 
 
@@ -47,7 +47,7 @@ RETRY_ARGS = {
 }
 
 
-def get_html(url, error_message="Failed to execute request.", max_attempts=10):
+def get_html(url, error_message="Failed to execute request.", max_attempts=8):
     """Takes URL and converts to `bs4.BeautifulSoup` object. Retries requests for `max_attempts` if request fails;
     if request still fails thereafter, None is returned.
 
@@ -56,7 +56,7 @@ def get_html(url, error_message="Failed to execute request.", max_attempts=10):
         error_message (str, optional): Error message to print if requests failed. Defaults to "Failed to
             execute request."
         max_attempts (int, optional): Maximum number of re-attempts prior to forfeiting request. Defaults
-            to 10.
+            to 8.
 
     Returns:
         bs4.BeautifulSoup: `bs4.BeautifulSoup` object if requested response was successful.
@@ -68,7 +68,7 @@ def get_html(url, error_message="Failed to execute request.", max_attempts=10):
     return BeautifulSoup(response.text, "html.parser")
 
 
-def get_response(*args, error_message="Failed to execute request.", max_attempts=10, **kwargs):
+def get_response(*args, error_message="Failed to execute request.", max_attempts=8, **kwargs):
     """Makes get request using the tenacity wrapper to retry failed requests. Returns response object if
     request is successful; returns None if request failed after max retries.
 
@@ -77,7 +77,7 @@ def get_response(*args, error_message="Failed to execute request.", max_attempts
         error_message (str, optional): Error message to print if requests failed. Defaults to "Failed to
             execute request."
         max_attempts (int, optional): Maximum number of re-attempts prior to forfeiting request. Defaults
-            to 10.
+            to 8.
         **kwargs (Any): Keyword arguments to pass to `requests.Session().get`.
 
     Returns:
@@ -93,12 +93,12 @@ def get_response(*args, error_message="Failed to execute request.", max_attempts
         raise RequestException from e
 
 
-def _get_tenacity_wrapped_response(*args, max_attempts=10, **kwargs):
+def _get_tenacity_wrapped_response(*args, max_attempts=8, **kwargs):
     """Makes tenacity-wrapped get request and retries request if it fails.
 
     Args:
         *args (Any): Positional arguments to pass to `requests.Session().get`.
-        max_attempts (int): Maximum number of re-attempts prior to forfeiting request. Defaults to 10.
+        max_attempts (int): Maximum number of re-attempts prior to forfeiting request. Defaults to 8.
         **kwargs (Any): Keyword arguments to pass to `requests.Session().get`.
 
     Returns:
