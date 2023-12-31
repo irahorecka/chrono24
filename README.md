@@ -114,7 +114,7 @@ Example output from `.search_detail`, which extends results from `.search`:
 The `chrono24` package handles specific exceptions that might occur during its use:
 
 - `NoListingsFoundException`: Raised when no listings are found.
-- `RequestException`: Raised when repeated requests fail.
+- `RequestException`: Raised when the request itself is invalid or repeated requests fail.
 
 ```python
 import chrono24
@@ -128,8 +128,8 @@ except NoListingFoundException:
     # In cases where no listings match the provided query
     print("No listing was found.")
 except RequestException:
-    # In cases where repeated requests cannot be made
-    print("Repeated requests failed.")
+    # In cases where an invalid request occurs or repeated requests fail
+    print("Invalid request or repeated requests failed.")
 ```
 
 ## Contribute
