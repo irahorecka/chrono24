@@ -135,22 +135,20 @@ rolex_dj.url
 The `chrono24` package handles specific exceptions that might occur during its use:
 
 - `NoListingsFoundException`: Raised when no listings are found.
-- `RequestException`: Raised when the request itself is invalid or repeated requests fail.
+- `RequestException`: Raised when a request error occurs or repeated requests fail.
 
 ```python
 import chrono24
 from chrono24.exceptions import NoListingFoundException, RequestException
 
-invalid_query = chrono24.query("Invalid Query")
 try:
-    for listing in invalid_query.search():
-        print(listing)
+    chrono24.query("Invalid Query")
 except NoListingFoundException:
     # In cases where no listings match the provided query
     print("No listing was found.")
 except RequestException:
-    # In cases where an invalid request occurs or repeated requests fail
-    print("Invalid request or repeated requests failed.")
+    # In cases where a request error occurs or repeated requests fail
+    print("Request error or repeated requests failed.")
 ```
 
 ## Contribute
