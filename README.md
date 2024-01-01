@@ -46,7 +46,7 @@ for listing in chrono24(query="Rolex DateJust").search():
 
 ## Usage
 
-Search standard or detailed watch listings for any query, limiting results to, for example, 25 listings. All results will be retrieved if no limit is provided:
+Search for standard or detailed watch listings for any query, limiting results to, for example, 25 listings. All results will be retrieved if no limit is provided, and they'll be sorted by new.
 
 ```python
 import chrono24
