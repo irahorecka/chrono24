@@ -20,7 +20,7 @@ Perform a standard search for Rolex DateJust watches:
 ```python
 import chrono24
 
-for listing in chrono24(query="Rolex DateJust").search():
+for listing in chrono24.query("Rolex DateJust").search():
     print(listing)
 ```
 
@@ -51,7 +51,7 @@ Search for standard or detailed watch listings for any query, limiting results t
 ```python
 import chrono24
 
-rolex_dj = chrono24(query="Rolex DateJust")
+rolex_dj = chrono24.query("Rolex DateJust")
 
 # Search for standard listings
 for listing in rolex_dj.search(limit=25):
@@ -122,7 +122,7 @@ The `chrono24` instance offers public attributes:
 ```python
 import chrono24
 
-rolex_dj = chrono24(query="Rolex DateJust")
+rolex_dj = chrono24.query("Rolex DateJust")
 
 rolex_dj.count
 # >>> 35582
@@ -141,7 +141,7 @@ The `chrono24` package handles specific exceptions that might occur during its u
 import chrono24
 from chrono24.exceptions import NoListingFoundException, RequestException
 
-invalid_query = chrono24(query="Invalid Query")
+invalid_query = chrono24.query("Invalid Query")
 try:
     for listing in invalid_query.search():
         print(listing)

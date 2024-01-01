@@ -12,7 +12,7 @@ import chrono24
 
 # fmt: off
 # Fetch listings up-front to avoid flooding Chrono24 with requests
-ROLEX_DJ = chrono24(query="Rolex DateJust")
+ROLEX_DJ = chrono24.query("Rolex DateJust")
 SEARCH_LIMIT = 3
 LISTINGS = list(ROLEX_DJ.search(limit=SEARCH_LIMIT))
 DETAILED_LISTINGS = list(ROLEX_DJ.search_detail(limit=SEARCH_LIMIT))
