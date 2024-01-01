@@ -155,18 +155,14 @@ class Chrono24:
             int: The total listing count.
 
         Raises:
-            NoListingsFoundException: Raised if the query is invalid or the total listing count is 0.
+            NoListingsFoundException: Raised if the query is invalid or no listing count is found.
         """
         try:
             query_html = BeautifulSoup(query_response.text, "html.parser")
-            # Raises AttributeError if query is invalid
-            total_listing_count = Listings(query_html).total_count
-            # Total listing count is 0
-            if not total_listing_count:
-                raise AttributeError
-            return total_listing_count
-        except AttributeError as e:
-            raise NoListingsFoundException(f"'{query}' is not a valid query.") from e
+            return Listings(query_html).total_count
+        except NoListingsFoundException as e:
+            e.args = (f"'{query}' is not a valid query.",)
+            raise
 
     @staticmethod
     def _get_standard_listing(listing_html):
@@ -227,14 +223,8 @@ class Listings:
 
         Yields:
             bs4.element.Tag: The HTML content representing the listing.
-
-        Raises:
-            NoListingsFoundException: Raised when no listings are found in the HTML content.
         """
-        # Attempt to find listings
         listings_div = self.html.find("div", {"id": "wt-watches"})
-        if not listings_div:
-            raise NoListingsFoundException("No listings were found.")
         # Yield individual listings as found in listings page
         yield from listings_div.find_all("a", {"class": "js-article-item"})
 
@@ -245,13 +235,18 @@ class Listings:
         Returns:
             int: The total count of listings as an integer.
 
-        Notes:
-            If the total count of listings cannot be found or parsed from the HTML content, returns 0.
+        Raises:
+            NoListingsFoundException: Raised if the query is invalid or no listing count is found.
         """
-        listing_count_text = get_text_html_tag(self.html.find("div", {"class": "h1 m-b-0 m-t-0"}))
-        match = re.search(RE_PATTERN_COMMA_SEPARATED_NUM, listing_count_text)
-        # Return total listing count as integer, otherwise 0
-        return int(match.group().replace(",", "")) if match else 0
+        try:
+            listing_count_text = get_text_html_tag(
+                self.html.find("div", {"class": "h1 m-b-0 m-t-0"})
+            )
+            match = re.search(RE_PATTERN_COMMA_SEPARATED_NUM, listing_count_text)
+            # Return total listing count as integer, otherwise 0
+            return int(match.group().replace(",", ""))
+        except AttributeError as e:
+            raise NoListingsFoundException("No listings found.") from e
 
 
 class StandardListing:

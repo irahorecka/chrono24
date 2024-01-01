@@ -5,4 +5,4 @@ chrono24
 
 from chrono24.api import Chrono24 as query
 
-__version__ = "0.2.2"
+__version__ = "0.2.3"
