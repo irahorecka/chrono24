@@ -5,7 +5,7 @@ chrono24
 
 import sys
 
-from chrono24.api import chrono24
+from chrono24.api import Chrono24
 
 
 class Chrono24ModuleCall:
@@ -20,9 +20,9 @@ class Chrono24ModuleCall:
         Returns:
             chrono24: An object or result returned by the chrono24 instance.
         """
-        return chrono24(query)
+        return Chrono24(query)
 
 
 sys.modules[__name__] = Chrono24ModuleCall()
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"

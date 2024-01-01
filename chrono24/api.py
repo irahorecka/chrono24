@@ -43,7 +43,7 @@ def get_text_html_tag_attr(html_tag, attr):
     return html_tag_text or NULL_VALUE
 
 
-class chrono24:
+class Chrono24:
     """A class for performing searches on Chrono24."""
 
     base_query_url = BASE_URL + "/search/index.htm?dosearch=true&query="
@@ -119,6 +119,7 @@ class chrono24:
             "showPage": 1,  # What page to view
             "sortorder": 5,  # Sort by newest listings
         }
+        # Construct Listings instance
         listings = self._get_listings(**request_attrs)
         # Iterate through all listings pages and yield individual listings
         num_listings_yielded = 0
@@ -127,15 +128,15 @@ class chrono24:
             if page_number != 1:
                 request_attrs["showPage"] = page_number
                 listings = self._get_listings(**request_attrs)
-            for listing in listings:
+            for listing_html in listings.htmls:
                 # Check if user-specified limit is reached
                 if limit and num_listings_yielded >= limit:
                     return
-                yield get_listing(listing)
+                yield get_listing(listing_html)
                 num_listings_yielded += 1
 
     def _get_listings(self, **kwargs):
-        """Get listings based on the provided keyword arguments.
+        """Get Listings instance based on the provided URL attribute keyword arguments.
 
         Args:
             **kwargs: URL attributes for customizing the query URL.
@@ -162,31 +163,32 @@ class chrono24:
         return self.count // self.page_size + 1
 
     @staticmethod
-    def _get_standard_listing(listing):
+    def _get_standard_listing(listing_html):
         """Get the standard JSON representation of a listing.
 
         Args:
-            listing (Listing): The listing object to extract JSON representation from.
+            listing_html (bs4.element.Tag): The HTML content representing the listing.
 
         Returns:
             dict: The standard JSON representation of the listing.
         """
-        return listing.json
+        return StandardListing(listing_html).json
 
     @staticmethod
-    def _get_detailed_listing(listing):
+    def _get_detailed_listing(listing_html):
         """Get a detailed JSON representation of a listing by combining its standard JSON
         with additional details fetched from its URL.
 
         Args:
-            listing (Listing): The listing object to extract detailed information from.
+            listing_html (bs4.element.Tag): The HTML content representing the listing.
 
         Returns:
             dict: The detailed JSON representation of the listing.
         """
+        listing = StandardListing(listing_html)
         listing_url = listing.json["url"]
-        detailed_listing = DetailedListing(get_html(listing_url)).json
-        return {**listing.json, **detailed_listing}
+        detailed_listing = DetailedListing(get_html(listing_url))
+        return {**listing.json, **detailed_listing.json}
 
     @staticmethod
     def _join_attrs(**kwargs):
@@ -213,11 +215,12 @@ class Listings:
         """
         self.html = html
 
-    def __iter__(self):
-        """Iterate through the listings and yield StandardListing objects.
+    @property
+    def htmls(self):
+        """Iterate through the listings and yield individual listing HTML content.
 
         Yields:
-            StandardListing: An object representing a standard listing.
+            bs4.element.Tag: The HTML content representing the listing.
 
         Raises:
             NoListingsFoundException: Raised when no listings are found in the HTML content.
@@ -228,8 +231,7 @@ class Listings:
             raise NoListingsFoundException("No listings were found.")
         # Yield individual listings as found in listings page
         listings = listings_div.find_all("a", {"class": "js-article-item"})
-        for listing in listings:
-            yield StandardListing(listing)
+        yield from listings
 
     @property
     def total_listings_count(self):
