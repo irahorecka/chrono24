@@ -230,8 +230,7 @@ class Listings:
         if not listings_div:
             raise NoListingsFoundException("No listings were found.")
         # Yield individual listings as found in listings page
-        listings = listings_div.find_all("a", {"class": "js-article-item"})
-        yield from listings
+        yield from listings_div.find_all("a", {"class": "js-article-item"})
 
     @property
     def total_listings_count(self):
