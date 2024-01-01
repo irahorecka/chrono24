@@ -12,7 +12,7 @@ from chrono24.session import get_response
 def test_no_listings_found_exception():
     """Test for NoListingsFoundException."""
     with pytest.raises(NoListingsFoundException):
-        list(chrono24.query("this is an invalid query").search(limit=1))
+        chrono24.query("this is an invalid query")
 
 
 def test_request_exception():

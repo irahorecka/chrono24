@@ -155,12 +155,16 @@ class Chrono24:
             int: The total listing count.
 
         Raises:
-            NoListingsFoundException: Raised if the query is invalid and unable to retrieve the total listing count.
+            NoListingsFoundException: Raised if the query is invalid or the total listing count is 0.
         """
         try:
             query_html = BeautifulSoup(query_response.text, "html.parser")
-            return Listings(query_html).total_listings_count
-        # Unable to get total listing count because of an invalid query
+            # Raises AttributeError if query is invalid
+            total_listing_count = Listings(query_html).total_count
+            # Total listing count is 0
+            if not total_listing_count:
+                raise AttributeError
+            return total_listing_count
         except AttributeError as e:
             raise NoListingsFoundException(f"'{query}' is not a valid query.") from e
 
@@ -235,7 +239,7 @@ class Listings:
         yield from listings_div.find_all("a", {"class": "js-article-item"})
 
     @property
-    def total_listings_count(self):
+    def total_count(self):
         """Get the total count of listings from the HTML content.
 
         Returns:
@@ -244,8 +248,8 @@ class Listings:
         Notes:
             If the total count of listings cannot be found or parsed from the HTML content, returns 0.
         """
-        listings_count_text = get_text_html_tag(self.html.find("div", {"class": "h1 m-b-0 m-t-0"}))
-        match = re.search(RE_PATTERN_COMMA_SEPARATED_NUM, listings_count_text)
+        listing_count_text = get_text_html_tag(self.html.find("div", {"class": "h1 m-b-0 m-t-0"}))
+        match = re.search(RE_PATTERN_COMMA_SEPARATED_NUM, listing_count_text)
         # Return total listing count as integer, otherwise 0
         return int(match.group().replace(",", "")) if match else 0
 
