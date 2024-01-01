@@ -19,5 +19,5 @@ def test_request_exception():
     """Test for RequestException."""
     with pytest.raises(RequestException):
         invalid_url = "https://irahorecka.com/invalid_endpoint"
-        # Only attempt request 3 times
+        # Only attempt 3 requests
         get_response(invalid_url, max_attempts=3)

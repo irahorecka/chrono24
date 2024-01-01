@@ -6,7 +6,6 @@ chrono24
 import sys
 
 from chrono24.api import chrono24
-from chrono24.exceptions import NoListingsFoundException, RequestException
 
 
 class Chrono24ModuleCall:
@@ -26,4 +25,4 @@ class Chrono24ModuleCall:
 
 sys.modules[__name__] = Chrono24ModuleCall()
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
