@@ -21,7 +21,9 @@ import chrono24
 
 for listing in chrono24(query="Rolex DateJust").search():
     print(listing)
+```
 
+```python
 >>> {'id': '32322343',
     'url': 'https://chrono24.com/rolex/datejust-41mm-blue-diamond-dial-2022---126334--id32322343.htm',
     'manufacturer': 'Rolex',
@@ -108,6 +110,24 @@ Example output from `.search_detail`, which extends results from `.search`:
 ```
 
 **Note:** Output keys in `.search` will always be constant, but `.search_detail` can vary based on information provided by the listing page, expanding on the details retrieved by `.search`.
+
+## Attributes
+
+The `chrono24` instance offers public attributes:
+
+- `count`: Total number of listings found.
+- `url`: URL of listings page.
+
+```python
+import chrono24
+
+rolex_dj = chrono24(query="Rolex DateJust")
+
+rolex_dj.count
+# >>> 35582
+rolex_dj.url
+# >>> 'https://www.chrono24.com/rolex/datejust--mod45.htm?dosearch=true&query=Rolex+DateJust'
+```
 
 ## Exceptions
 
