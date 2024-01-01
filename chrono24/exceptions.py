@@ -11,6 +11,6 @@ class NoListingsFoundException(Exception):
 
 
 class RequestException(Exception):
-    """Repeated requests failed."""
+    """Invalid request or repeated requests failed."""
 
     pass

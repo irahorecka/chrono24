@@ -57,6 +57,29 @@ class chrono24:
             query (str): The search query to be performed.
         """
         self.query = query
+        self.query_response = get_response(self.base_query_url + query.replace(" ", "+"))
+        self.url = self.query_response.url
+
+    @property
+    @lru_cache(maxsize=64)
+    def count(self):
+        """Calculate the total number of pages based on the total listing count.
+
+        Args:
+            listings (Listings): The listings object used to extract the total listing count.
+
+        Returns:
+            int: The total number of pages calculated based on the total listing count.
+
+        Raises:
+            NoListingsFoundException: Raised if the query is invalid and unable to retrieve the total listing count.
+        """
+        try:
+            listings_html = BeautifulSoup(self.query_response.text, "html.parser")
+            return Listings(listings_html).total_listings_count
+        # Unable to get total listing count because of an invalid query
+        except AttributeError as e:
+            raise NoListingsFoundException(f"'{self.query}' is not a valid query.") from e
 
     def search(self, limit=None):
         """Performs a search using the _search method with an optional limit.
@@ -97,10 +120,9 @@ class chrono24:
             "sortorder": 5,  # Sort by newest listings
         }
         listings = self._get_listings(**request_attrs)
-        total_page_count = self._get_total_page_count(listings)
         # Iterate through all listings pages and yield individual listings
         num_listings_yielded = 0
-        for page_number in range(1, total_page_count + 1):
+        for page_number in range(1, self._total_page_count + 1):
             # First page of listings URL is already declared - simply yield its listings
             if page_number != 1:
                 request_attrs["showPage"] = page_number
@@ -112,24 +134,6 @@ class chrono24:
                 yield get_listing(listing)
                 num_listings_yielded += 1
 
-    def _get_total_page_count(self, listings):
-        """Calculate the total number of pages based on the total listing count.
-
-        Args:
-            listings (Listings): The listings object used to extract the total listing count.
-
-        Returns:
-            int: The total number of pages calculated based on the total listing count.
-
-        Raises:
-            NoListingsFoundException: Raised if the query is invalid and unable to retrieve the total listing count.
-        """
-        try:
-            return listings.total_listings_count // self.page_size + 1
-        # Unable to get total listing count because of an invalid query
-        except AttributeError as e:
-            raise NoListingsFoundException(f"'{self.query}' is not a valid query.") from e
-
     def _get_listings(self, **kwargs):
         """Get listings based on the provided keyword arguments.
 
@@ -139,16 +143,23 @@ class chrono24:
         Returns:
             Listings: A Listings object containing the fetched listings.
         """
-        # Construct initial query URL
-        query_url = self.base_query_url + self.query.replace(" ", "+")
         # Chrono24 will modify the initial query URL - add URL attributes to the modified URL
-        response_url = get_response(query_url).url + self._join_attrs(**kwargs)
+        query_url = self.url + self._join_attrs(**kwargs)
         page_number = kwargs.get("showPage", 1)
         # Further modify URL if seeking listings page > 1
         if page_number != 1:
-            response_url = response_url.replace("index.htm", f"index-{page_number}.htm")
+            query_url = query_url.replace("index.htm", f"index-{page_number}.htm")
 
-        return Listings(get_html(response_url))
+        return Listings(get_html(query_url))
+
+    @property
+    def _total_page_count(self):
+        """Calculate the total number of pages based on the total listing count.
+
+        Returns:
+            int: The total number of pages calculated based on the total listing count.
+        """
+        return self.count // self.page_size + 1
 
     @staticmethod
     def _get_standard_listing(listing):
