@@ -56,11 +56,11 @@ class Chrono24:
         Args:
             query (str): The search query to be performed.
         """
+        _query_response = get_response(self.base_query_url + query.replace(" ", "+"))
+        _listings = Listings(BeautifulSoup(_query_response.text, "html.parser"))
         self.query = query
-        self.query_response = get_response(self.base_query_url + self.query.replace(" ", "+"))
-        # Checks if query is valid upon instantiation - raises NoListingsFoundException
-        self.count = self._get_total_listing_count(self.query, self.query_response)
-        self.url = self.query_response.url
+        self.count = _listings.count
+        self.url = _query_response.url
 
     def search(self, limit=None):
         """Performs a search using the _search method with an optional limit.
@@ -144,27 +144,6 @@ class Chrono24:
         return self.count // self.page_size + 1
 
     @staticmethod
-    def _get_total_listing_count(query, query_response):
-        """Gets total listing count.
-
-        Args:
-            query (str): The search query to be performed.
-            query_response (request.models.Response): The search query's response.
-
-        Returns:
-            int: The total listing count.
-
-        Raises:
-            NoListingsFoundException: Raised if the query is invalid or no listing count is found.
-        """
-        try:
-            query_html = BeautifulSoup(query_response.text, "html.parser")
-            return Listings(query_html).total_count
-        except NoListingsFoundException as e:
-            e.args = (f"'{query}' is not a valid query.",)
-            raise
-
-    @staticmethod
     def _get_standard_listing(listing_html):
         """Get the standard JSON representation of a listing.
 
@@ -216,6 +195,7 @@ class Listings:
             html (bs4.element.ResultSet): The HTML content containing listings.
         """
         self.html = html
+        self.count = self._get_total_count(html)
 
     @property
     def htmls(self):
@@ -228,9 +208,12 @@ class Listings:
         # Yield individual listings as found in listings page
         yield from listings_div.find_all("a", {"class": "js-article-item"})
 
-    @property
-    def total_count(self):
+    @staticmethod
+    def _get_total_count(html):
         """Get the total count of listings from the HTML content.
+
+        Args:
+            html (bs4.element.ResultSet): The HTML content containing listings.
 
         Returns:
             int: The total count of listings as an integer.
@@ -239,9 +222,7 @@ class Listings:
             NoListingsFoundException: Raised if the query is invalid or no listing count is found.
         """
         try:
-            listing_count_text = get_text_html_tag(
-                self.html.find("div", {"class": "h1 m-b-0 m-t-0"})
-            )
+            listing_count_text = get_text_html_tag(html.find("div", {"class": "h1 m-b-0 m-t-0"}))
             match = re.search(RE_PATTERN_COMMA_SEPARATED_NUM, listing_count_text)
             # Return total listing count as integer, otherwise 0
             return int(match.group().replace(",", ""))
