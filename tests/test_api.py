@@ -10,6 +10,7 @@ from pytest import mark
 import chrono24
 
 
+# fmt: off
 # Fetch listings up-front to avoid flooding Chrono24 with requests
 ROLEX_DJ = chrono24(query="Rolex DateJust")
 SEARCH_LIMIT = 3
@@ -19,9 +20,6 @@ JOINED_LISTINGS = (LISTINGS, DETAILED_LISTINGS)
 LISTING = LISTINGS[0]
 DETAILED_LISTING = DETAILED_LISTINGS[0]
 JOINED_LISTING = (LISTING, DETAILED_LISTING)
-
-
-# fmt: off
 STANDARD_LISTING_KEYS = {
     'id', 'url', 'manufacturer', 'certification_status',
     'title', 'description', 'price', 'shipping_price',

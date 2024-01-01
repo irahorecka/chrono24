@@ -16,7 +16,7 @@ NULL_VALUE = "null"
 RE_PATTERN_COMMA_SEPARATED_NUM = r"\b\d{1,3}(?:,\d{3})*\b"
 
 
-def get_text_html_tag_or_null(html_tag):
+def get_text_html_tag(html_tag):
     """Get the text from an HTML tag or return NULL_VALUE if the tag is None or has no text.
 
     Args:
@@ -29,7 +29,7 @@ def get_text_html_tag_or_null(html_tag):
     return html_tag_text or NULL_VALUE
 
 
-def get_text_html_tag_attr_or_null(html_tag, attr):
+def get_text_html_tag_attr(html_tag, attr):
     """Get the attribute text from an HTML tag or return NULL_VALUE if the tag is None or has no text.
 
     Args:
@@ -184,7 +184,8 @@ class chrono24:
         Returns:
             dict: The detailed JSON representation of the listing.
         """
-        return {**listing.json, **DetailedListing(get_html(listing.json["url"])).json}
+        detailed_listing = DetailedListing(get_html(listing.json["url"])).json
+        return {**listing.json, **detailed_listing}
 
     @staticmethod
     def _join_attrs(**kwargs):
@@ -239,9 +240,7 @@ class Listings:
         Notes:
             If the total count of listings cannot be found or parsed from the HTML content, returns 0.
         """
-        listings_count_text = get_text_html_tag_or_null(
-            self.html.find("div", {"class": "h1 m-b-0 m-t-0"})
-        )
+        listings_count_text = get_text_html_tag(self.html.find("div", {"class": "h1 m-b-0 m-t-0"}))
         match = re.search(RE_PATTERN_COMMA_SEPARATED_NUM, listings_count_text)
         # Return total listing count as integer, otherwise 0
         return int(match.group().replace(",", "")) if match else 0
@@ -267,19 +266,17 @@ class StandardListing:
             dict: A dictionary containing the extracted listing information.
         """
         return {
-            "id": get_text_html_tag_attr_or_null(self.html, "data-article-id"),
-            "url": BASE_URL + get_text_html_tag_attr_or_null(self.html, "href"),
-            "manufacturer": get_text_html_tag_attr_or_null(self.html, "data-manufacturer"),
-            "certification_status": get_text_html_tag_attr_or_null(
+            "id": get_text_html_tag_attr(self.html, "data-article-id"),
+            "url": BASE_URL + get_text_html_tag_attr(self.html, "href"),
+            "manufacturer": get_text_html_tag_attr(self.html, "data-manufacturer"),
+            "certification_status": get_text_html_tag_attr(
                 self.html, "data-watch-certification-status"
             ),
-            "title": get_text_html_tag_or_null(
-                self.html.find("div", {"class": "text-bold text-ellipsis"})
-            ),
-            "description": get_text_html_tag_or_null(
+            "title": get_text_html_tag(self.html.find("div", {"class": "text-bold text-ellipsis"})),
+            "description": get_text_html_tag(
                 self.html.find("div", {"class": "text-ellipsis m-b-2"})
             ),
-            "price": get_text_html_tag_or_null(
+            "price": get_text_html_tag(
                 (lambda x: x.parent if x else x)(self.html.find("span", {"class": "currency"}))
             ),
             "shipping_price": self._shipping_price,
@@ -297,7 +294,7 @@ class StandardListing:
             str: The shipping price extracted from the content, formatted as a string ('$X' format).
         """
         # Extract comma-separated shipping price
-        shipping_price_text = get_text_html_tag_or_null(
+        shipping_price_text = get_text_html_tag(
             self.html.find("div", {"class": "text-muted text-sm"})
         )
         match = re.search(RE_PATTERN_COMMA_SEPARATED_NUM, shipping_price_text)
@@ -311,7 +308,7 @@ class StandardListing:
         Returns:
             tuple: A tuple containing the location and merchant name extracted from the content.
         """
-        location = get_text_html_tag_attr_or_null(
+        location = get_text_html_tag_attr(
             self.html.find("button", {"class": "js-tooltip"}), "data-content"
         )
         # Possible merchant names found in listings page
@@ -334,7 +331,7 @@ class StandardListing:
         """
         image_divs = self.html.find_all("div", {"class": "js-carousel-cell"})
         return [
-            get_text_html_tag_attr_or_null(image_div.find("img"), "data-lazy-sweet-spot-master-src")
+            get_text_html_tag_attr(image_div.find("img"), "data-lazy-sweet-spot-master-src")
             .lower()
             .replace("square_size_", "ExtraLarge")
             for image_div in image_divs
@@ -348,7 +345,7 @@ class StandardListing:
             str: The badge information related to the listing.
         """
         badge = self.html.find("span", {"class": "article-item-article-badge"})
-        return get_text_html_tag_or_null(badge)
+        return get_text_html_tag(badge)
 
 
 class DetailedListing:
@@ -384,7 +381,7 @@ class DetailedListing:
             tr_tds = [tr.find_all("td") for tr in tbody.find_all("tr")]
             for idx, tds in enumerate(tr_tds):
                 # Get description key
-                key = get_text_html_tag_or_null(tds[0]).lower().replace(" ", "_")
+                key = get_text_html_tag(tds[0]).lower().replace(" ", "_")
                 # Check if `tds` of length 1 is a header above description column or description body
                 if len(tds) == 1:
                     # We want to map description bodies with their headers; description columns will
@@ -407,7 +404,7 @@ class DetailedListing:
         Returns:
             str: The cleaned-up product detail text.
         """
-        product_detail = get_text_html_tag_or_null(td).replace("\n", " ")
+        product_detail = get_text_html_tag(td).replace("\n", " ")
         # Add statements as necessary to tidy possible product detail values
         # Simplify case diameter value
         product_detail = product_detail.replace("Try it on", "").strip()
@@ -457,7 +454,7 @@ class DetailedListing:
             str: The anticipated delivery details for the listing.
         """
         anticipated_delivery = self.html.find("span", {"class": "js-shipping-time"})
-        return get_text_html_tag_or_null(anticipated_delivery).replace("Anticipated delivery: ", "")
+        return get_text_html_tag(anticipated_delivery).replace("Anticipated delivery: ", "")
 
     @property
     def _merchant_name(self):
@@ -467,7 +464,7 @@ class DetailedListing:
             str: The name of the merchant associated with the listing.
         """
         merchant_name = self.html.find("button", {"class": "js-link-merchant-name"})
-        return get_text_html_tag_or_null(merchant_name)
+        return get_text_html_tag(merchant_name)
 
     @property
     def _merchant_rating(self):
@@ -477,7 +474,7 @@ class DetailedListing:
             str: The rating of the merchant associated with the listing.
         """
         rating = self.html.find("span", {"class": "rating"})
-        return get_text_html_tag_or_null(rating)
+        return get_text_html_tag(rating)
 
     @property
     def _merchant_reviews(self):
@@ -487,7 +484,7 @@ class DetailedListing:
             str: The number of reviews for the merchant associated with the listing.
         """
         num_reviews = self.html.find("button", {"class": "js-link-merchant-reviews"})
-        return get_text_html_tag_or_null(num_reviews)
+        return get_text_html_tag(num_reviews)
 
     @property
     def _merchant_badges(self):
@@ -501,6 +498,6 @@ class DetailedListing:
             item_html = BeautifulSoup(item.get("data-content"), "html.parser")
             item_badge = item_html.find("span", {"class": ""})
             if item_badge:
-                badges.append(get_text_html_tag_or_null(item_badge))
+                badges.append(get_text_html_tag(item_badge))
 
         return badges
