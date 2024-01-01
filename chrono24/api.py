@@ -57,29 +57,10 @@ class Chrono24:
             query (str): The search query to be performed.
         """
         self.query = query
-        self.query_response = get_response(self.base_query_url + query.replace(" ", "+"))
+        self.query_response = get_response(self.base_query_url + self.query.replace(" ", "+"))
+        # Checks if query is valid upon instantiation - raises NoListingsFoundException
+        self.count = self._get_total_listing_count(self.query, self.query_response)
         self.url = self.query_response.url
-
-    @property
-    @lru_cache(maxsize=64)
-    def count(self):
-        """Calculate the total number of pages based on the total listing count.
-
-        Args:
-            listings (Listings): The listings object used to extract the total listing count.
-
-        Returns:
-            int: The total number of pages calculated based on the total listing count.
-
-        Raises:
-            NoListingsFoundException: Raised if the query is invalid and unable to retrieve the total listing count.
-        """
-        try:
-            query_html = BeautifulSoup(self.query_response.text, "html.parser")
-            return Listings(query_html).total_listings_count
-        # Unable to get total listing count because of an invalid query
-        except AttributeError as e:
-            raise NoListingsFoundException(f"'{self.query}' is not a valid query.") from e
 
     def search(self, limit=None):
         """Performs a search using the _search method with an optional limit.
@@ -161,6 +142,27 @@ class Chrono24:
             int: The total number of pages calculated based on the total listing count.
         """
         return self.count // self.page_size + 1
+
+    @staticmethod
+    def _get_total_listing_count(query, query_response):
+        """Gets total listing count.
+
+        Args:
+            query (str): The search query to be performed.
+            query_response (request.models.Response): The search query's response.
+
+        Returns:
+            int: The total listing count.
+
+        Raises:
+            NoListingsFoundException: Raised if the query is invalid and unable to retrieve the total listing count.
+        """
+        try:
+            query_html = BeautifulSoup(query_response.text, "html.parser")
+            return Listings(query_html).total_listings_count
+        # Unable to get total listing count because of an invalid query
+        except AttributeError as e:
+            raise NoListingsFoundException(f"'{query}' is not a valid query.") from e
 
     @staticmethod
     def _get_standard_listing(listing_html):
