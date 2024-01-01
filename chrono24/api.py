@@ -75,8 +75,8 @@ class chrono24:
             NoListingsFoundException: Raised if the query is invalid and unable to retrieve the total listing count.
         """
         try:
-            listings_html = BeautifulSoup(self.query_response.text, "html.parser")
-            return Listings(listings_html).total_listings_count
+            query_html = BeautifulSoup(self.query_response.text, "html.parser")
+            return Listings(query_html).total_listings_count
         # Unable to get total listing count because of an invalid query
         except AttributeError as e:
             raise NoListingsFoundException(f"'{self.query}' is not a valid query.") from e
@@ -144,13 +144,13 @@ class chrono24:
             Listings: A Listings object containing the fetched listings.
         """
         # Chrono24 will modify the initial query URL - add URL attributes to the modified URL
-        query_url = self.url + self._join_attrs(**kwargs)
+        listings_url = self.url + self._join_attrs(**kwargs)
         page_number = kwargs.get("showPage", 1)
-        # Further modify URL if seeking listings page > 1
+        # Further modify URL if seeking a listings page greater than 1
         if page_number != 1:
-            query_url = query_url.replace("index.htm", f"index-{page_number}.htm")
+            listings_url = listings_url.replace("index.htm", f"index-{page_number}.htm")
 
-        return Listings(get_html(query_url))
+        return Listings(get_html(listings_url))
 
     @property
     def _total_page_count(self):
@@ -184,7 +184,8 @@ class chrono24:
         Returns:
             dict: The detailed JSON representation of the listing.
         """
-        detailed_listing = DetailedListing(get_html(listing.json["url"])).json
+        listing_url = listing.json["url"]
+        detailed_listing = DetailedListing(get_html(listing_url)).json
         return {**listing.json, **detailed_listing}
 
     @staticmethod
@@ -319,7 +320,7 @@ class StandardListing:
             if to_replace in location:
                 return location.replace(to_replace, ""), merchant_name
 
-        # No merchant was found - return full location
+        # No merchant was found - return full location and null value
         return location, NULL_VALUE
 
     @property
@@ -330,6 +331,7 @@ class StandardListing:
             list: A list of URLs representing images of the listing.
         """
         image_divs = self.html.find_all("div", {"class": "js-carousel-cell"})
+        # Modify URLs to select for extra large images
         return [
             get_text_html_tag_attr(image_div.find("img"), "data-lazy-sweet-spot-master-src")
             .lower()
@@ -376,21 +378,21 @@ class DetailedListing:
             dict: A dictionary containing product details extracted from the content.
         """
         product_details = {}
-        for tbody in self.html.find_all("tbody"):
+        for detail_section in self.html.find_all("tbody"):
             # Each table row is a description, with some exceptions (see below)
-            tr_tds = [tr.find_all("td") for tr in tbody.find_all("tr")]
-            for idx, tds in enumerate(tr_tds):
+            details = [section.find_all("td") for section in detail_section.find_all("tr")]
+            for idx, detail in enumerate(details):
                 # Get description key
-                key = get_text_html_tag(tds[0]).lower().replace(" ", "_")
-                # Check if `tds` of length 1 is a header above description column or description body
-                if len(tds) == 1:
+                key = get_text_html_tag(detail[0]).lower().replace(" ", "_")
+                # Check if `detail` of length 1 is a header above description column or description body
+                if len(detail) == 1:
                     # We want to map description bodies with their headers; description columns will
-                    # have `tds` of length 2
-                    if idx + 1 != len(tr_tds) and len(tr_tds[idx + 1]) == 1:
-                        product_details[key] = self._tidy_product_detail(tr_tds[idx + 1][0])
+                    # have `detail` of length 2
+                    if idx + 1 != len(details) and len(details[idx + 1]) == 1:
+                        product_details[key] = self._tidy_product_detail(details[idx + 1][0])
                     continue
                 # Assign detail found in description column
-                product_details[key] = self._tidy_product_detail(tds[1])
+                product_details[key] = self._tidy_product_detail(detail[1])
 
         return product_details
 
@@ -433,8 +435,8 @@ class DetailedListing:
         Returns:
             list: A list of available payment methods for the listing.
         """
-        available_payments = []
         payment_keywords = {"visa", "mastercard", "american-express", "bankwire", "affirm"}
+        available_payments = []
         for payment in self.html.find_all("i", {"class": "payment-icon"}):
             # Available payments will be found in the payment attributes class
             payment_class = "".join(payment.get("data-lazy-class", payment.get("class", [])))
@@ -494,10 +496,10 @@ class DetailedListing:
             list: A list of badges associated with the merchant of the listing.
         """
         badges = []
-        for item in self.html.find_all("button", {"class": "dealer-bonus-badge"}):
-            item_html = BeautifulSoup(item.get("data-content"), "html.parser")
-            item_badge = item_html.find("span", {"class": ""})
-            if item_badge:
-                badges.append(get_text_html_tag(item_badge))
+        for badge in self.html.find_all("button", {"class": "dealer-bonus-badge"}):
+            badge_html = BeautifulSoup(badge.get("data-content"), "html.parser")
+            badge_text = badge_html.find("span", {"class": ""})
+            if badge_text:
+                badges.append(get_text_html_tag(badge_text))
 
         return badges

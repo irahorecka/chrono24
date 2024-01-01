@@ -25,4 +25,4 @@ class Chrono24ModuleCall:
 
 sys.modules[__name__] = Chrono24ModuleCall()
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
