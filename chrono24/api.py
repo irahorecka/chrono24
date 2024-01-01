@@ -55,13 +55,11 @@ class Chrono24:
         Args:
             query (str): The search query to be performed.
         """
-        _base_query_url = (
+        _query_response = get_response(
             f"{BASE_URL}/search/index.htm?dosearch=true&query={query.replace(' ', '+')}"
         )
-        _query_response = get_response(_base_query_url)
-        _listings = Listings(BeautifulSoup(_query_response.text, "html.parser"))
-        self.count = _listings.count
         self.url = _query_response.url
+        self.count = self._get_listings_from_url(_query_response.url).count
 
     def search(self, limit=None):
         """Performs a search using the _search method with an optional limit.
@@ -70,9 +68,9 @@ class Chrono24:
             limit (int, optional): An optional integer representing the maximum number of results to return.
 
         Yields:
-            Iterator[dict]: Listings found from search.
+            Iterator[dict]: Listings as JSON found from search.
         """
-        yield from self._search(self._get_standard_listing, limit)
+        yield from self._search(self._get_standard_listing_as_json, limit)
 
     def search_detail(self, limit=None):
         """Performs a detailed search using the _search method with an optional limit.
@@ -81,19 +79,19 @@ class Chrono24:
             limit (int, optional): An optional integer representing the maximum number of detailed results to return.
 
         Yields:
-            Iterator[dict]: Detailed listings found from search.
+            Iterator[dict]: Detailed listings as JSON found from search.
         """
-        yield from self._search(self._get_detailed_listing, limit)
+        yield from self._search(self._get_detailed_listing_as_json, limit)
 
-    def _search(self, get_listing, limit):
-        """Perform a search and yield individual listings based on the given get_listing function.
+    def _search(self, get_listing_as_json, limit):
+        """Perform a search and yield individual listings based on the given get_listing_as_json function.
 
         Args:
-            get_listing (function): A function to process individual listings.
+            get_listing_as_json (function): A function to process individual listings as JSON.
             limit (int, optional): The maximum number of listings to yield. Defaults to None.
 
         Yields:
-            Listing: A processed listing obtained from the search results.
+            dict: A processed listing JSON obtained from the search results.
         """
         # Get HTML content for the first listings page to find total page count for a query
         request_attrs = {
@@ -102,32 +100,33 @@ class Chrono24:
             "sortorder": 5,  # Sort by newest listings
         }
         # Construct Listings instance
-        listings = self._get_listings(**request_attrs)
+        listings = self._get_listings_from_url(self.url, **request_attrs)
         # Iterate through all listings pages and yield individual listings
         num_listings_yielded = 0
         for page_number in range(1, self._total_page_count + 1):
             # First page of listings URL is already declared - simply yield its listings
             if page_number != 1:
                 request_attrs["showPage"] = page_number
-                listings = self._get_listings(**request_attrs)
+                listings = self._get_listings_from_url(self.url, **request_attrs)
             for listing_html in listings.htmls:
                 # Check if user-specified limit is reached
                 if limit and num_listings_yielded >= limit:
                     return
-                yield get_listing(listing_html)
+                yield get_listing_as_json(listing_html)
                 num_listings_yielded += 1
 
-    def _get_listings(self, **kwargs):
+    def _get_listings_from_url(self, url, **kwargs):
         """Get Listings instance based on the provided URL attribute keyword arguments.
 
         Args:
+            url (str): The query URL.
             **kwargs: URL attributes for customizing the query URL.
 
         Returns:
             Listings: A Listings object containing the fetched listings.
         """
         # Chrono24 will modify the initial query URL - add URL attributes to the modified URL
-        listings_url = self.url + self._join_attrs(**kwargs)
+        listings_url = url + self._join_attrs(**kwargs)
         page_number = kwargs.get("showPage", 1)
         # Further modify URL if seeking a listings page greater than 1
         if page_number != 1:
@@ -145,7 +144,7 @@ class Chrono24:
         return self.count // self.page_size + 1
 
     @staticmethod
-    def _get_standard_listing(listing_html):
+    def _get_standard_listing_as_json(listing_html):
         """Get the standard JSON representation of a listing.
 
         Args:
@@ -157,7 +156,7 @@ class Chrono24:
         return StandardListing(listing_html).json
 
     @staticmethod
-    def _get_detailed_listing(listing_html):
+    def _get_detailed_listing_as_json(listing_html):
         """Get a detailed JSON representation of a listing by combining its standard JSON
         with additional details fetched from its URL.
 
@@ -363,35 +362,36 @@ class DetailedListing:
         """
         product_details = {}
         for detail_section in self.html.find_all("tbody"):
-            # Each table row is a description, with some exceptions (see below)
+            # Each table row is either a detail column (key-value pair) or a detail header or body
             details = [section.find_all("td") for section in detail_section.find_all("tr")]
             for idx, detail in enumerate(details):
-                # Get description key
-                key = get_text_html_tag(detail[0]).lower().replace(" ", "_")
-                # Check if `detail` of length 1 is a header above description column or description body
-                if len(detail) == 1:
-                    # We want to map description bodies with their headers; description columns will
-                    # have `detail` of length 2
+                # Get detail key and set default detail value
+                detail_key = get_text_html_tag(detail[0]).lower().replace(" ", "_")
+                detail_description = NULL_VALUE
+                try:
+                    detail_description = get_text_html_tag(detail[1])
+                    product_details[detail_key] = self._tidy_product_detail(detail_description)
+                except IndexError:
+                    # Check if `detail` is a header above description column or description body
+                    # We want to map description headers to their bodies
                     if idx + 1 != len(details) and len(details[idx + 1]) == 1:
-                        product_details[key] = self._tidy_product_detail(details[idx + 1][0])
-                    continue
-                # Assign detail found in description column
-                product_details[key] = self._tidy_product_detail(detail[1])
+                        detail_description = get_text_html_tag(details[idx + 1][0])
+                        product_details[detail_key] = self._tidy_product_detail(detail_description)
 
         return product_details
 
     @staticmethod
-    def _tidy_product_detail(td):
+    def _tidy_product_detail(product_detail):
         """Tidy up product detail text.
 
         Args:
-            td (bs4.element.Tag): The HTML tag containing the product detail text.
+            product_detail (str): The product detail text.
 
         Returns:
             str: The cleaned-up product detail text.
         """
-        product_detail = get_text_html_tag(td).replace("\n", " ")
         # Add statements as necessary to tidy possible product detail values
+        product_detail = product_detail.replace("\n", " ")
         # Simplify case diameter value
         product_detail = product_detail.replace("Try it on", "").strip()
         return product_detail
