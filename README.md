@@ -142,7 +142,7 @@ import chrono24
 from chrono24.exceptions import NoListingFoundException, RequestException
 
 try:
-    chrono24.query("Invalid Query")
+    invalid_query = chrono24.query("Invalid Query")
 except NoListingFoundException:
     # In cases where no listings match the provided query
     print("No listing was found.")
