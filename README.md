@@ -139,13 +139,13 @@ The `chrono24` package handles specific exceptions that might occur during its u
 
 ```python
 import chrono24
-from chrono24.exceptions import NoListingFoundException, RequestException
+from chrono24.exceptions import NoListingsFoundException, RequestException
 
 try:
     invalid_query = chrono24.query("Invalid Query")
-except NoListingFoundException:
+except NoListingsFoundException:
     # In cases where no listings match the provided query
-    print("No listing was found.")
+    print("No listings were found.")
 except RequestException:
     # In cases where a request error occurs or repeated requests fail
     print("Request error or repeated requests failed.")
