@@ -46,7 +46,6 @@ def get_text_html_tag_attr(html_tag, attr):
 class Chrono24:
     """A class for performing searches on Chrono24."""
 
-    base_query_url = BASE_URL + "/search/index.htm?dosearch=true&query="
     page_size = 120
 
     def __init__(self, query):
@@ -56,9 +55,11 @@ class Chrono24:
         Args:
             query (str): The search query to be performed.
         """
-        _query_response = get_response(self.base_query_url + query.replace(" ", "+"))
+        _base_query_url = (
+            f"{BASE_URL}/search/index.htm?dosearch=true&query={query.replace(' ', '+')}"
+        )
+        _query_response = get_response(_base_query_url)
         _listings = Listings(BeautifulSoup(_query_response.text, "html.parser"))
-        self.query = query
         self.count = _listings.count
         self.url = _query_response.url
 
