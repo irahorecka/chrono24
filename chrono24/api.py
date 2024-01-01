@@ -55,11 +55,10 @@ class Chrono24:
         Args:
             query (str): The search query to be performed.
         """
-        _query_response = get_response(
+        self.url = get_response(
             f"{BASE_URL}/search/index.htm?dosearch=true&query={query.replace(' ', '+')}"
-        )
-        self.url = _query_response.url
-        self.count = self._get_listings_from_url(_query_response.url).count
+        ).url
+        self.count = self._get_listings_from_url(self.url).count
 
     def search(self, limit=None):
         """Performs a search using the _search method with an optional limit.
