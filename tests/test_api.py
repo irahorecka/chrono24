@@ -40,6 +40,14 @@ def test_search_limit_reached(listings):
     assert len(listings) == SEARCH_LIMIT
 
 
+def test_large_search_limit_reached():
+    """Test for checking large search limit."""
+    # Only check standard listings to avoid flooding Chrono24 with requests
+    limit = 150
+    listings = list(ROLEX_DJ.search(limit=limit))
+    assert len(listings) == limit
+
+
 def test_standard_listing_keys():
     """Ensure that the retrieved listing dictionary contains only the expected keys."""
     assert len(STANDARD_LISTING_KEYS.union(LISTING.keys())) == len(STANDARD_LISTING_KEYS)
