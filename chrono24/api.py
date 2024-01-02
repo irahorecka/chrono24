@@ -58,10 +58,10 @@ class Chrono24:
         self.url = get_response(
             f"{BASE_URL}/search/index.htm?dosearch=true&query={query.replace(' ', '+')}"
         ).url
-        self.count = self._get_listings_from_url(self.url).count
+        self.count = self._get_listings().count
 
     def search(self, limit=None):
-        """Performs a search using the _search method with an optional limit.
+        """Perform a search using the _search method with an optional limit.
 
         Args:
             limit (int, optional): An optional integer representing the maximum number of results to return.
@@ -72,7 +72,7 @@ class Chrono24:
         yield from self._search(self._get_standard_listing_as_json, limit)
 
     def search_detail(self, limit=None):
-        """Performs a detailed search using the _search method with an optional limit.
+        """Perform a detailed search using the _search method with an optional limit.
 
         Args:
             limit (int, optional): An optional integer representing the maximum number of detailed results to return.
@@ -99,14 +99,14 @@ class Chrono24:
             "sortorder": 5,  # Sort by newest listings
         }
         # Construct Listings instance
-        listings = self._get_listings_from_url(self.url, **request_attrs)
+        listings = self._get_listings(**request_attrs)
         # Iterate through all listings pages and yield individual listings
         num_listings_yielded = 0
         for page_number in range(1, self._total_page_count + 1):
             # First page of listings URL is already declared - simply yield its listings
             if page_number != 1:
                 request_attrs["showPage"] = page_number
-                listings = self._get_listings_from_url(self.url, **request_attrs)
+                listings = self._get_listings(**request_attrs)
             for listing_html in listings.htmls:
                 # Check if user-specified limit is reached
                 if limit and num_listings_yielded >= limit:
@@ -114,18 +114,17 @@ class Chrono24:
                 yield get_listing_as_json(listing_html)
                 num_listings_yielded += 1
 
-    def _get_listings_from_url(self, url, **kwargs):
+    def _get_listings(self, **kwargs):
         """Get Listings instance based on the provided URL attribute keyword arguments.
 
         Args:
-            url (str): The query URL.
             **kwargs: URL attributes for customizing the query URL.
 
         Returns:
             Listings: A Listings object containing the fetched listings.
         """
         # Chrono24 will modify the initial query URL - add URL attributes to the modified URL
-        listings_url = url + self._join_attrs(**kwargs)
+        listings_url = self.url + self._join_attrs(**kwargs)
         page_number = kwargs.get("showPage", 1)
         # Further modify URL if seeking a listings page greater than 1
         if page_number != 1:
