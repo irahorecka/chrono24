@@ -220,7 +220,9 @@ class Listings:
             NoListingsFoundException: Raised if the query is invalid or no listing count is found.
         """
         try:
-            listing_count_text = get_text_html_tag(html.find("div", {"class": "h1 m-b-0 m-t-0"}))
+            listing_count_text = get_text_html_tag(
+                html.find("div", {"class": "result-page-top"}).find("strong")
+            )
             match = re.search(RE_PATTERN_COMMA_SEPARATED_NUM, listing_count_text)
             # Return total listing count as integer, otherwise 0
             return int(match.group().replace(",", ""))
