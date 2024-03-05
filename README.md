@@ -4,6 +4,8 @@
   <img src="https://static.chrono24.com/images/default/logo-positive-reduced.svg" width="50%" />
 </p>
 
+<br>
+
 [Chrono24](https://www.chrono24.com/) API wrapper
 
 [![pypiv](https://img.shields.io/pypi/v/chrono24.svg)](https://pypi.python.org/pypi/chrono24)
