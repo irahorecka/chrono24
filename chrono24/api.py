@@ -3,6 +3,7 @@ chrono24/api
 ~~~~~~~~~~~~
 """
 
+import json
 import re
 from functools import lru_cache
 
@@ -219,15 +220,21 @@ class Listings:
         Raises:
             NoListingsFoundException: Raised if the query is invalid or no listing count is found.
         """
-        try:
-            listing_count_text = get_text_html_tag(
-                html.find("div", {"class": "result-page-top"}).find("strong")
-            )
-            match = re.search(RE_PATTERN_COMMA_SEPARATED_NUM, listing_count_text)
-            # Return total listing count as integer, otherwise 0
-            return int(match.group().replace(",", ""))
-        except AttributeError as e:
-            raise NoListingsFoundException("No listings found.") from e
+        # Find the script tag that contains `window.metaData`
+        script = html.find("script", text=re.compile("window.metaData"))
+        # Use regex to extract the JSON string
+        pattern = re.compile(r"window.metaData = ({.*?});", re.DOTALL)
+        script_text = script.text
+        match = pattern.search(script_text)
+        if match:
+            metadata_json_str = match[1]
+            metadata = json.loads(metadata_json_str)
+            # Only return total count if listings are found
+            total_count = int(metadata["data"]["searchResult"]["numResult"])
+            if total_count > 0:
+                return total_count
+
+        raise NoListingsFoundException("No listings found.")
 
 
 class StandardListing:
