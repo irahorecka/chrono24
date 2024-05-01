@@ -9,7 +9,7 @@
 [Chrono24](https://www.chrono24.com/) API wrapper
 
 [![pypiv](https://img.shields.io/pypi/v/chrono24.svg)](https://pypi.python.org/pypi/chrono24)
-[![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![continuous-integration](https://github.com/irahorecka/chrono24/workflows/continuous-integration/badge.svg)](https://github.com/irahorecka/chrono24/actions)
 [![Licence](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/irahorecka/chrono24/main/LICENSE)
 
