@@ -129,7 +129,7 @@ class Chrono24:
         page_number = kwargs.get("showPage", 1)
         # Further modify URL if seeking a listings page greater than 1
         if page_number != 1:
-            listings_url = listings_url.replace("index.htm", f"index-{page_number}.htm")
+            listings_url = listings_url.replace(".htm", f"-{page_number}.htm")
 
         return Listings(get_html(listings_url))
 
