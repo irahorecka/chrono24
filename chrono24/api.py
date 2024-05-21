@@ -5,6 +5,7 @@ chrono24/api
 
 import json
 import re
+import time
 from functools import lru_cache
 
 from bs4 import BeautifulSoup
@@ -40,7 +41,8 @@ def get_text_html_tag_attr(html_tag, attr):
     Returns:
         str: The attribute text content of the HTML tag, or NULL_VALUE if the tag is None or has no text.
     """
-    html_tag_text = html_tag[attr].strip() if html_tag else ""
+    # Get attribute text from HTML tag or return NULL_VALUE if tag is None
+    html_tag_text = html_tag.get(attr, "").strip() if html_tag else ""
     return html_tag_text or NULL_VALUE
 
 
@@ -131,7 +133,7 @@ class Chrono24:
         if page_number != 1:
             listings_url = listings_url.replace(".htm", f"-{page_number}.htm")
 
-        return Listings(get_html(listings_url))
+        return self._get_listings_with_attempts(listings_url, max_attempts=8)
 
     @property
     def _total_page_count(self):
@@ -182,6 +184,29 @@ class Chrono24:
         """
         return "&" + "&".join(f"{k}={v}" for k, v in kwargs.items())
 
+    @staticmethod
+    def _get_listings_with_attempts(listings_url, max_attempts=5):
+        """Get Listings instance with a maximum number of attempts.
+
+        Args:
+            listings_url (str): The URL to fetch listings from.
+            max_attempts (int, optional): The maximum number of attempts to fetch listings. Defaults to 5.
+
+        Returns:
+            Listings: A Listings object containing the fetched listings.
+        """
+        attempts = 0
+        while attempts < max_attempts:
+            try:
+                listings = Listings(get_html(listings_url))
+                # Return Listings instance if no AttributeError is raised
+                next(listings.htmls)  # Check if listings are found
+                return listings
+            except AttributeError:
+                attempts += 1
+                print(f"Retrying HTML parsing... Attempt # {attempts}.")
+                time.sleep(1)  # Wait 1 second before retrying
+
 
 class Listings:
     """A class representing a collection of listings extracted from HTML content."""
@@ -205,7 +230,7 @@ class Listings:
         """
         listings_div = self.html.find("div", {"id": "wt-watches"})
         # Yield individual listings as found in listings page
-        yield from listings_div.find_all("a", {"class": "js-article-item"})
+        yield from listings_div.find_all("a", {"class": re.compile(r"^js-article-item")})
 
     @staticmethod
     def _get_total_count(html):

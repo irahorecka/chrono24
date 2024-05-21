@@ -31,7 +31,7 @@ def _log_retry_attempt(retry_state):
     Args:
         retry_state (tenacity.retry): Retry object.
     """
-    print(f"Retrying request... Attempt # {retry_state.attempt_number}.")
+    print(f"Retrying request... Attempt #{retry_state.attempt_number}.")
 
 
 RETRY_ARGS = {
