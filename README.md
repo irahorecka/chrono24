@@ -95,6 +95,18 @@ Example output from `.search_detail`, which extends results from `.search`:
 
 ```python
 {
+    'id': '32322343',
+    'url': 'https://chrono24.com/rolex/datejust-41mm-blue-diamond-dial-2022---126334--id32322343.htm',
+    'manufacturer': 'Rolex',
+    'certification_status': 'Basic',
+    'title': 'Rolex Datejust 41',
+    'description': '41mm Blue Diamond Dial 2022 - 126334',
+    'price': '$16,553',
+    'shipping_price': '$396',
+    'location': 'Düsseldorf, Germany.',
+    'merchant_name': 'Dealer',
+    'badge': 'Professional',
+    'image_urls': [...],  # List of image URLs
     'listing_code': 'J8S2V6',
     'brand': 'Rolex',
     'model': 'Datejust 41',
