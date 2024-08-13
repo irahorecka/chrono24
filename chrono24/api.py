@@ -288,9 +288,13 @@ class StandardListing:
             "certification_status": get_text_html_tag_attr(
                 self.html, "data-watch-certification-status"
             ),
-            "title": get_text_html_tag(self.html.find("div", {"class": "text-bold text-ellipsis"})),
+            "title": get_text_html_tag(
+                self.html.find(
+                    "div", class_=lambda x: x and "text-bold" in x and "text-ellipsis" in x
+                )
+            ),
             "description": get_text_html_tag(
-                self.html.find("div", {"class": "text-ellipsis m-b-2"})
+                self.html.find("div", class_=lambda x: x and "m-b-2" in x and "text-ellipsis" in x)
             ),
             "price": get_text_html_tag(
                 (lambda x: x.parent if x else x)(self.html.find("span", {"class": "currency"}))
