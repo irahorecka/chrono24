@@ -246,7 +246,7 @@ class Listings:
             NoListingsFoundException: Raised if the query is invalid or no listing count is found.
         """
         # Find the script tag that contains `window.metaData`
-        script = html.find("script", text=re.compile("window.metaData"))
+        script = html.find("script", string=re.compile("window.metaData"))
         # Use regex to extract the JSON string
         pattern = re.compile(r"window.metaData = ({.*?});", re.DOTALL)
         script_text = script.text
