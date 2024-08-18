@@ -18,7 +18,7 @@ NULL_VALUE = "null"
 RE_PATTERN_COMMA_SEPARATED_NUM = r"\b\d{1,3}(?:,\d{3})*\b"
 
 
-def get_text_html_tag(html_tag):
+def get_html_tag_as_text(html_tag):
     """Get the text from an HTML tag or return NULL_VALUE if the tag is None or has no text.
 
     Args:
@@ -31,7 +31,7 @@ def get_text_html_tag(html_tag):
     return html_tag_text or NULL_VALUE
 
 
-def get_text_html_tag_attr(html_tag, attr):
+def get_html_tag_attribute_as_text(html_tag, attr):
     """Get the attribute text from an HTML tag or return NULL_VALUE if the tag is None or has no text.
 
     Args:
@@ -52,8 +52,7 @@ class Chrono24:
     page_size = 120
 
     def __init__(self, query):
-        """
-        Initialize a chrono24 object with a query.
+        """Initialize a chrono24 object with a query.
 
         Args:
             query (str): The search query to be performed.
@@ -212,8 +211,7 @@ class Listings:
     """A class representing a collection of listings extracted from HTML content."""
 
     def __init__(self, html):
-        """
-        Initialize the Listings object with HTML content.
+        """Initialize the Listings object with HTML content.
 
         Args:
             html (bs4.element.ResultSet): The HTML content containing listings.
@@ -282,21 +280,21 @@ class StandardListing:
             dict: A dictionary containing the extracted listing information.
         """
         return {
-            "id": get_text_html_tag_attr(self.html, "data-article-id"),
-            "url": BASE_URL + get_text_html_tag_attr(self.html, "href"),
-            "manufacturer": get_text_html_tag_attr(self.html, "data-manufacturer"),
-            "certification_status": get_text_html_tag_attr(
+            "id": get_html_tag_attribute_as_text(self.html, "data-article-id"),
+            "url": BASE_URL + get_html_tag_attribute_as_text(self.html, "href"),
+            "manufacturer": get_html_tag_attribute_as_text(self.html, "data-manufacturer"),
+            "certification_status": get_html_tag_attribute_as_text(
                 self.html, "data-watch-certification-status"
             ),
-            "title": get_text_html_tag(
+            "title": get_html_tag_as_text(
                 self.html.find(
                     "div", class_=lambda x: x and "text-bold" in x and "text-ellipsis" in x
                 )
             ),
-            "description": get_text_html_tag(
+            "description": get_html_tag_as_text(
                 self.html.find("div", class_=lambda x: x and "m-b-2" in x and "text-ellipsis" in x)
             ),
-            "price": get_text_html_tag(
+            "price": get_html_tag_as_text(
                 (lambda x: x.parent if x else x)(self.html.find("span", {"class": "currency"}))
             ),
             "shipping_price": self._shipping_price,
@@ -314,7 +312,7 @@ class StandardListing:
             str: The shipping price extracted from the content, formatted as a string ('$X' format).
         """
         # Extract comma-separated shipping price
-        shipping_price_text = get_text_html_tag(
+        shipping_price_text = get_html_tag_as_text(
             self.html.find("div", {"class": "text-muted text-sm"})
         )
         match = re.search(RE_PATTERN_COMMA_SEPARATED_NUM, shipping_price_text)
@@ -328,7 +326,7 @@ class StandardListing:
         Returns:
             tuple: A tuple containing the location and merchant name extracted from the content.
         """
-        location = get_text_html_tag_attr(
+        location = get_html_tag_attribute_as_text(
             self.html.find("button", {"class": "js-tooltip"}), "data-content"
         )
         # Possible merchant names found in listings page
@@ -352,7 +350,7 @@ class StandardListing:
         image_divs = self.html.find_all("div", {"class": "js-carousel-cell"})
         # Modify URLs to select for extra large images
         return [
-            get_text_html_tag_attr(image_div.find("img"), "data-lazy-sweet-spot-master-src")
+            get_html_tag_attribute_as_text(image_div.find("img"), "data-lazy-sweet-spot-master-src")
             .lower()
             .replace("square_size_", "ExtraLarge")
             for image_div in image_divs
@@ -366,7 +364,7 @@ class StandardListing:
             str: The badge information related to the listing.
         """
         badge = self.html.find("span", {"class": "article-item-article-badge"})
-        return get_text_html_tag(badge)
+        return get_html_tag_as_text(badge)
 
 
 class DetailedListing:
@@ -402,16 +400,16 @@ class DetailedListing:
             details = [section.find_all("td") for section in detail_section.find_all("tr")]
             for idx, detail in enumerate(details):
                 # Get detail key and set default detail value
-                detail_key = get_text_html_tag(detail[0]).lower().replace(" ", "_")
+                detail_key = get_html_tag_as_text(detail[0]).lower().replace(" ", "_")
                 detail_description = NULL_VALUE
                 try:
-                    detail_description = get_text_html_tag(detail[1])
+                    detail_description = get_html_tag_as_text(detail[1])
                     product_details[detail_key] = self._tidy_product_detail(detail_description)
                 except IndexError:
                     # Check if `detail` is a header above description column or description body
                     # We want to map description headers to their bodies
                     if idx + 1 != len(details) and len(details[idx + 1]) == 1:
-                        detail_description = get_text_html_tag(details[idx + 1][0])
+                        detail_description = get_html_tag_as_text(details[idx + 1][0])
                         product_details[detail_key] = self._tidy_product_detail(detail_description)
 
         return product_details
@@ -476,7 +474,7 @@ class DetailedListing:
             str: The anticipated delivery details for the listing.
         """
         anticipated_delivery = self.html.find("span", {"class": "js-shipping-time"})
-        return get_text_html_tag(anticipated_delivery).replace("Anticipated delivery: ", "")
+        return get_html_tag_as_text(anticipated_delivery).replace("Anticipated delivery: ", "")
 
     @property
     def _merchant_name(self):
@@ -486,7 +484,7 @@ class DetailedListing:
             str: The name of the merchant associated with the listing.
         """
         merchant_name = self.html.find("button", {"class": "js-link-merchant-name"})
-        return get_text_html_tag(merchant_name)
+        return get_html_tag_as_text(merchant_name)
 
     @property
     def _merchant_rating(self):
@@ -496,7 +494,7 @@ class DetailedListing:
             str: The rating of the merchant associated with the listing.
         """
         rating = self.html.find("span", {"class": "rating"})
-        return get_text_html_tag(rating)
+        return get_html_tag_as_text(rating)
 
     @property
     def _merchant_reviews(self):
@@ -506,7 +504,7 @@ class DetailedListing:
             str: The number of reviews for the merchant associated with the listing.
         """
         num_reviews = self.html.find("button", {"class": "js-link-merchant-reviews"})
-        return get_text_html_tag(num_reviews)
+        return get_html_tag_as_text(num_reviews)
 
     @property
     def _merchant_badges(self):
@@ -520,6 +518,6 @@ class DetailedListing:
             badge_html = BeautifulSoup(badge.get("data-content"), "html.parser")
             badge_text = badge_html.find("span", {"class": ""})
             if badge_text:
-                badges.append(get_text_html_tag(badge_text))
+                badges.append(get_html_tag_as_text(badge_text))
 
         return badges
