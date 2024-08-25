@@ -198,10 +198,10 @@ class Chrono24:
         while attempts < max_attempts:
             try:
                 listings = Listings(get_html(listings_url))
-                # Return Listings instance if no AttributeError is raised
+                # Return Listings instance if no AttributeError or KeyError is raised
                 next(listings.htmls)  # Check if listings are found
                 return listings
-            except AttributeError:
+            except (AttributeError, KeyError):
                 attempts += 1
                 print(f"Retrying HTML parsing... Attempt # {attempts}.")
                 time.sleep(1)  # Wait 1 second before retrying
@@ -253,6 +253,7 @@ class Listings:
             metadata_json_str = match[1]
             metadata = json.loads(metadata_json_str)
             # Only return total count if listings are found
+            # metadata["data"] sometimes does not contain "searchResult" key - throws KeyError
             total_count = int(metadata["data"]["searchResult"]["numResult"])
             if total_count > 0:
                 return total_count
