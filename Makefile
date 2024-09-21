@@ -3,7 +3,7 @@ black: ## Black format every python file to line length 100
 	make clean;
 
 github-test: ## Run pytest for every test file in GitHub Actions
-	pytest -W ignore -vv .;
+	pytest -W ignore -vv --tb=short -k .;
 
 test: ## Run pytest for every test file
 	make github-test;
