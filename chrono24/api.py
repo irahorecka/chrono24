@@ -11,6 +11,7 @@ from functools import lru_cache
 from bs4 import BeautifulSoup
 
 from chrono24.exceptions import NoListingsFoundException
+from chrono24.filters import Filters
 from chrono24.session import get_html, get_response
 
 BASE_URL = "https://chrono24.com"
@@ -51,15 +52,23 @@ class Chrono24:
 
     page_size = 120
 
-    def __init__(self, query):
-        """Initialize a chrono24 object with a query.
+    def __init__(self, query="", filters="", min_year=None, max_year=None):
+        """Initialize a chrono24 object with a query and optional filters.
 
         Args:
-            query (str): The search query to be performed.
+            query (str, optional): The search query to be performed. Defaults to an empty string.
+            filters (str, list, or tuple, optional): Filter criteria to apply during initialization. Can be a single string
+                or a collection of filter keys. Defaults to an empty string, which applies a filter for 'used' watches.
+            min_year (int, optional): Minimum year for the search filter. Defaults to None.
+            max_year (int, optional): Maximum year for the search filter. Defaults to None.
         """
-        self.url = get_response(
-            f"{BASE_URL}/search/index.htm?dosearch=true&query={query.replace(' ', '+')}"
-        ).url
+        # Initialize filters with default 'used' filter if no query is provided
+        filters = "used" if not query else filters  # Default to 'used' if no query is provided
+        self.filters = Filters(filters, min_year, max_year)
+        # Construct the base URL for the query
+        query_url = f"{BASE_URL}/search/index.htm?dosearch=true&query={query.replace(' ', '+')}"
+        # Add filter parameters to the URL
+        self.url = get_response(query_url + "&" + self.filters.parameters).url
         self.count = self._get_listings().count
 
     def search(self, limit=None):
@@ -67,6 +76,7 @@ class Chrono24:
 
         Args:
             limit (int, optional): An optional integer representing the maximum number of results to return.
+                Defaults to None.
 
         Yields:
             Iterator[dict]: Listings as JSON found from search.
@@ -78,6 +88,7 @@ class Chrono24:
 
         Args:
             limit (int, optional): An optional integer representing the maximum number of detailed results to return.
+                Defaults to None.
 
         Yields:
             Iterator[dict]: Detailed listings as JSON found from search.
@@ -98,7 +109,6 @@ class Chrono24:
         request_attrs = {
             "pageSize": self.page_size,  # Number of listings per results page
             "showPage": 1,  # What page to view
-            "sortorder": 5,  # Sort by newest listings
         }
         # Construct Listings instance
         listings = self._get_listings(**request_attrs)
@@ -193,6 +203,9 @@ class Chrono24:
 
         Returns:
             Listings: A Listings object containing the fetched listings.
+
+        Raises:
+            NoListingsFoundException: Raised if the query is invalid or no listing count is found.
         """
         attempts = 0
         while attempts < max_attempts:
@@ -205,6 +218,8 @@ class Chrono24:
                 attempts += 1
                 print(f"Retrying HTML parsing... Attempt # {attempts}.")
                 time.sleep(1)  # Wait 1 second before retrying
+
+        raise NoListingsFoundException("No listings found.")
 
 
 class Listings:
