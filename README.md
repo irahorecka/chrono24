@@ -144,9 +144,9 @@ To use filters, specify them when creating a query using the `filters` argument.
 import chrono24
 
 # Initialize a query with a single filter
-filtered_query = chrono24.query("Rolex DateJust").search(filters="steel")
+filtered_query = chrono24.query("Rolex DateJust", filters="steel")
 # Initialize a query with multiple filters
-filtered_query = chrono24.query("Rolex DateJust").search(filters=["steel", "automatic"])
+filtered_query = chrono24.query("Rolex DateJust", filters=["steel", "automatic"])
 # Initialize a query with year constraints
 filtered_query = chrono24.query("Rolex DateJust", min_year=2010, max_year=2020)
 # Combine filters and year constraints
