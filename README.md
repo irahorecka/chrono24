@@ -19,7 +19,7 @@
 pip install chrono24
 ```
 
-## Quick start
+## Quick Start
 
 Perform a standard search for Rolex DateJust watches:
 
@@ -29,6 +29,8 @@ import chrono24
 for listing in chrono24.query("Rolex DateJust").search():
     print(listing)
 ```
+
+Example output:
 
 ```python
 >>> {'id': '32322343',
@@ -52,7 +54,7 @@ for listing in chrono24.query("Rolex DateJust").search():
 
 ## Usage
 
-Search for standard or detailed watch listings for any query, limiting results to, for example, 25 listings. All results will be retrieved if no limit is provided, and they'll be sorted by new.
+Search for standard or detailed watch listings for any query, limiting results to, for example, 25 listings. All results will be retrieved if no limit is provided, and they'll be sorted by new listings first.
 
 ```python
 import chrono24
@@ -70,7 +72,7 @@ for detailed_listing in rolex_dj.search_detail(limit=25):
 
 **Note:** When using these functions, be cautious not to overwhelm Chrono24 with excessive requests. The `search` method consumes 1 request per 120 posts retrieved, while `search_detail` utilizes 1 request per individual post. Avoid flooding requests to maintain a balanced usage of the Chrono24 service and prevent any potential access limitations.
 
-## API outputs
+## API Outputs
 
 Example output from `.search`:
 
@@ -129,6 +131,90 @@ Example output from `.search_detail`, which extends results from `.search`:
 ```
 
 **Note:** Output keys in `.search` will always be constant, but `.search_detail` can vary based on information provided by the listing page, expanding on the details retrieved by `.search`.
+
+## Filters
+
+You can refine your watch searches using various filter criteria, as well as define year ranges using `min_year` and `max_year`. Pre-defined filters include options such as case material, bracelet type, movement type, and more. These filters and year constraints can be applied when creating a query object.
+
+### How to Use Filters
+
+To use filters, specify them when creating a query using the `filters` argument. You can pass a single string, a list/tuple of filter keys, or include year constraints using the `min_year` and `max_year` parameters:
+
+```python
+import chrono24
+
+# Initialize a query with a single filter
+filtered_query = chrono24.query("Rolex DateJust").search(filters="steel")
+# Initialize a query with multiple filters
+filtered_query = chrono24.query("Rolex DateJust").search(filters=["steel", "automatic"])
+# Initialize a query with year constraints
+filtered_query = chrono24.query("Rolex DateJust", min_year=2010, max_year=2020)
+# Combine filters and year constraints
+filtered_query = chrono24.query("Rolex DateJust", filters=["steel", "automatic"], min_year=2010, max_year=2020)
+```
+
+### Available Filter Categories
+
+The available filter categories are:
+
+- **Case Filters**: Material, diameter, and more.
+- **Clasp Filters**: Clasp type, material, etc.
+- **Condition and Delivery Contents**: Item condition, delivery options, included papers/box.
+- **Dial Filters**: Dial color, numerals, etc.
+- **Location Filters**: Country-specific filters.
+- **Movement and Functions**: Manual, automatic, complications.
+- **Other Filters**: Miscellaneous filters such as water resistance, glass type.
+- **Seller and Listing Type**: Dealer, private seller, new/used.
+- **Sort By**: Sorting options like 'Newest listings first', 'Price ascending', etc.
+- **Strap and Bracelet**: Bracelet material, color, strap type.
+- **Watch Type**: Sports, dress, luxury, and more.
+
+### Finding Filters
+
+You can view all available filters using the `chrono24.filters.show()` method:
+
+```python
+import chrono24
+
+# Display all available filter categories and keys
+chrono24.filters.show()
+```
+
+This will print a categorized list of all possible filters, helping you decide which ones to apply to your query. If you're not sure which filter to use, you can also search for filter keys using the `chrono24.filters.search(query)` method:
+
+```python
+import chrono24
+
+# Search for filters related to 'steel'
+chrono24.filters.search("steel")
+```
+
+Example output:
+
+```text
+Search results for query 'steel':
+
+Direct matches:
+  - gold_steel_band
+  - steel_band
+  - gold_steel_color
+  - steel_band_color
+  - gold_steel_clasp
+  - steel_clasp
+  - gold_steel
+  - steel
+  - gold_steel_bezel
+  - steel_bezel
+
+Fuzzy matches:
+  - steel
+  - steel_band
+  - gold_steel
+  - steel_clasp
+  - steel_bezel
+```
+
+This output shows the best filter keys matching the query 'steel', divided into **Direct matches** (exact or close matches) and **Fuzzy matches** (similar but not exact matches). Use these filter keys to refine your watch search in `chrono24`.
 
 ## Attributes
 
