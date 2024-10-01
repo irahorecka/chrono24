@@ -6,23 +6,9 @@ chrono24/session
 import requests
 import tenacity
 from bs4 import BeautifulSoup
+from faker import Faker
 
 from chrono24.exceptions import RequestException
-
-HEADERS = {
-    "accept": "*/*",
-    "accept-encoding": "gzip, deflate",
-    "accept-language": "pt-PT,pt;q=0.9,en-US;q=0.8,en;q=0.7",
-    "cookie": "uid=9c718efe-dcca-4e71-b92d-c3dd7b7f06cc",
-    "referer": "https://a3853408329f84107a5d2b90c11d7c4b.safeframe.googlesyndication.com/",
-    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="98", "Google Chrome";v="98"',
-    "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": '"Windows"',
-    "sec-fetch-dest": "empty",
-    "sec-fetch-mode": "cors",
-    "sec-fetch-site": "same-origin",
-    "user-agent": "Mozilla/5.0 (Windows NT 8.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.82 Safari/537.36",
-}
 
 
 def _log_retry_attempt(retry_state):
@@ -113,7 +99,56 @@ def _get_tenacity_wrapped_response(*args, max_attempts=8, **kwargs):
     for attempt in tenacity.Retrying(**retry_args):
         with attempt:
             response = requests.get(
-                *args, **kwargs, headers={**HEADERS, **kwargs.get("headers", {})}
+                *args,
+                **kwargs,
+                headers={**_generate_dom_specific_header(), **kwargs.get("headers", {})},
             )
             response.raise_for_status()
             return response
+
+
+def _generate_dom_specific_header():
+    """Generates high-quality DOM-specific HTTP header using the Faker library, ensuring maximum authenticity
+    and variability to mimic real browser behavior.
+
+    Returns:
+        dict: A dictionary containing dynamically generated HTTP headers.
+    """
+    # Initialize Faker instance
+    faker = Faker()
+    # Generate a realistic User-Agent and associated fields using the available methods
+    user_agent = faker.user_agent()
+    # Use available platform tokens and operating system attributes from Faker
+    platform_token = faker.random_element(
+        elements=[
+            faker.windows_platform_token(),
+            faker.linux_platform_token(),
+            faker.mac_platform_token(),
+        ]
+    )
+    # Generate the headers using only the Faker methods listed in the provided attribute list
+    headers = {
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Encoding": "gzip, deflate, br",  # Commonly supported encoding formats in browsers
+        "Accept-Language": faker.language_code(),  # Use language_code to generate values like 'en', 'de', etc.
+        "Cache-Control": "no-cache, no-store, must-revalidate",  # Ensure no caching for the request
+        "Connection": "keep-alive",  # Standard for persistent connections
+        "DNT": "1" if faker.boolean() else "0",  # Do Not Track: 1 or 0
+        "Host": faker.domain_name(),  # Simulate a real host domain
+        "Origin": faker.uri(),  # Generate an origin header using a realistic URI
+        "Pragma": "no-cache",  # Prevent any caching
+        "Referer": faker.url(),  # Generates a referer URL to simulate legitimate navigation
+        "Sec-CH-UA": f'"{user_agent}";v="{faker.random_int(80, 116)}", "{platform_token}";v="{faker.random_int(80, 116)}"',
+        "Sec-CH-UA-Mobile": "?0",  # Indicates a desktop environment
+        "Sec-CH-UA-Platform": f'"{platform_token}"',  # Randomized platform token from Faker
+        "Sec-Fetch-Dest": "document",  # Specifies that the resource is a document
+        "Sec-Fetch-Mode": "navigate",  # Request made by navigating
+        "Sec-Fetch-Site": "same-origin",  # Indicates request is from the same origin
+        "Sec-Fetch-User": "?1",  # User-initiated navigation
+        "TE": "Trailers",  # HTTP Transfer-Encoding
+        "Upgrade-Insecure-Requests": "1",  # Requests secure (HTTPS) versions
+        "User-Agent": user_agent,  # Use the same user-agent string as generated earlier
+        "X-Forwarded-For": faker.ipv4_public(),  # Generate a realistic public IP address
+        "Authorization": f"Bearer {faker.uuid4()}",  # Simulate a Bearer token using a UUID
+    }
+    return headers
