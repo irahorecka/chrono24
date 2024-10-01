@@ -15,8 +15,8 @@ DEFAULT_QUERY = chrono24.query("")  # Query with an empty string to test default
 SEARCH_LIMIT = 3
 
 # Perform initial searches for listings and detailed listings
-LISTINGS = list(ROLEX_DJ.search(limit=SEARCH_LIMIT))
-DETAILED_LISTINGS = list(ROLEX_DJ.search_detail(limit=SEARCH_LIMIT))
+LISTINGS = list(ROLEX_DJ.standard_search(limit=SEARCH_LIMIT))
+DETAILED_LISTINGS = list(ROLEX_DJ.detailed_search(limit=SEARCH_LIMIT))
 
 # Group standard and detailed listings for parameterized tests
 JOINED_LISTINGS = (LISTINGS, DETAILED_LISTINGS)
@@ -59,7 +59,7 @@ def test_large_search_limit_reached():
     """Test for checking a larger search limit."""
     # Only check standard listings to avoid flooding Chrono24 with too many requests
     limit = 150
-    listings = list(ROLEX_DJ.search(limit=limit))
+    listings = list(ROLEX_DJ.standard_search(limit=limit))
     assert len(listings) == limit, f"Expected {limit} listings, got {len(listings)}."
 
 

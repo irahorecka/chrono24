@@ -71,8 +71,8 @@ class Chrono24:
         self.url = get_response(query_url + "&" + self.filters.parameters).url
         self.count = self._get_listings().count
 
-    def search(self, limit=None):
-        """Perform a search using the _search method with an optional limit.
+    def standard_search(self, limit=None):
+        """Perform a standard search using the _search method with an optional limit.
 
         Args:
             limit (int, optional): An optional integer representing the maximum number of results to return.
@@ -83,7 +83,7 @@ class Chrono24:
         """
         yield from self._search(self._get_standard_listing_as_json, limit)
 
-    def search_detail(self, limit=None):
+    def detailed_search(self, limit=None):
         """Perform a detailed search using the _search method with an optional limit.
 
         Args:
