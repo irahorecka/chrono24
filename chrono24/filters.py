@@ -38,8 +38,9 @@ class Filters:
         **case_filters,
         **sort_by_filters,  # Most important, added last
     }
+    all_filter_keys = sorted(all_filters.keys())
 
-    all_filters_with_categories = {
+    all_filters_by_category = {
         "Case": case_filters,
         "Clasp": clasp_filters,
         "Condition and Delivery Contents": condition_and_delivery_contents_filters,
@@ -101,7 +102,13 @@ class Filters:
             if filter_key in self.all_filters:
                 self.filters.add(self.all_filters[filter_key])
             else:
-                raise ValueError(f"Invalid filter key: {filter_key}")
+                filter_suggestions = ", ".join([f"'{s}'" for s in self._fuzzy_match(filter_key)])
+                suggestion_message = (
+                    f" Did you mean one of these? {filter_suggestions}"
+                    if filter_suggestions
+                    else ""
+                )
+                raise ValueError(f"Invalid filter key: '{filter_key}'.{suggestion_message}")
 
         if not [f for f in self.filters if f.startswith("sortorder=")]:
             self.filters.add("sortorder=5")  # Default sort order is 'Newest listings first'
@@ -129,12 +136,10 @@ class Filters:
         Returns:
             None: Prints the best matching keys based on the query.
         """
+        # Get the best matching keys based on the query
         query = query.lower().replace(" ", "_")  # Normalize the query to match snake_case
-        all_keys = list(cls.all_filters.keys())
-        # Direct matches
-        direct_matches = [key for key in all_keys if query in key]
-        # Fuzzy matches using difflib
-        fuzzy_matches = get_close_matches(query, all_keys, n=5, cutoff=0.5)
+        direct_matches = cls._direct_match(query)
+        fuzzy_matches = cls._fuzzy_match(query)
 
         print(f"\nSearch results for query '{query}':\n")
         if direct_matches:
@@ -160,13 +165,39 @@ class Filters:
         Returns:
             str: A JSON-formatted string of all available filters.
         """
-        num_categories = len(cls.all_filters_with_categories)
+        num_categories = len(cls.all_filters_by_category)
         print(f"\nTotal number of categories: {num_categories}")
         print(f"\nTotal number of filters: {len(cls.all_filters)}\n")
-        for category, filters in cls.all_filters_with_categories.items():
+        for category, filters in cls.all_filters_by_category.items():
             print(category)
             print("=" * len(category))
             for filter_key in sorted(filters.keys()):
                 print(f'  - "{filter_key}"')
 
             print("\n")
+
+    @classmethod
+    def _direct_match(cls, query):
+        """Search for direct matches based on a given query.
+
+        Args:
+            query (str): The query string to search for in the filter keys.
+
+        Returns:
+            list: A list of the best matching keys based on the query.
+        """
+        return [key for key in cls.all_filter_keys if query in key]
+
+    @classmethod
+    def _fuzzy_match(cls, query, cutoff=0.5):
+        """Search for fuzzy matches based on a given query.
+
+        Args:
+            query (str): The query string to search for in the filter keys.
+            cutoff (float, optional): The minimum score for a match to be considered.
+                Default is 0.5.
+
+        Returns:
+            list: A list of the best matching keys based on the query.
+        """
+        return get_close_matches(query, cls.all_filter_keys, cutoff=cutoff)
