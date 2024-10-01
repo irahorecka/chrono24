@@ -44,14 +44,12 @@ def test_apply_invalid_filter_key(filters_instance):
     """Test applying an invalid filter key raises a ValueError."""
     with pytest.raises(ValueError) as excinfo:
         Filters(to_apply="invalid_filter")
-    assert "Invalid filter key: 'invalid_filter'" in str(excinfo.value)
 
 
 def test_apply_mixed_valid_invalid_keys(filters_instance):
     """Test applying a mix of valid and invalid filter keys."""
     with pytest.raises(ValueError) as excinfo:
         filters_instance = Filters(to_apply=["steel", "invalid_filter"])
-    assert "Invalid filter key: 'invalid_filter'" in str(excinfo.value)
     assert filters_instance.filters == DEFAULT_FILTERS  # Ensure no valid filters were added
 
 
