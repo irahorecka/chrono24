@@ -7,4 +7,4 @@ chrono24
 from chrono24.api import Chrono24 as query
 from chrono24.filters import Filters as filters
 
-__version__ = "0.3.1"
+__version__ = "0.3.2"
