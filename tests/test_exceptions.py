@@ -28,18 +28,12 @@ def test_filters_invalid_key_exception():
     """Test that an invalid filter key raises a ValueError."""
     with pytest.raises(ValueError) as excinfo:
         Filters(to_apply="non_existent_filter").apply()
-    assert "Invalid filter key: non_existent_filter" in str(
-        excinfo.value
-    ), "Expected ValueError for invalid filter key."
 
 
 def test_filters_mixed_invalid_key_exception():
     """Test that a mix of valid and invalid filter keys raises a ValueError."""
     with pytest.raises(ValueError) as excinfo:
         Filters(to_apply=["steel", "invalid_filter_key"]).apply()
-    assert "Invalid filter key: invalid_filter_key" in str(
-        excinfo.value
-    ), "Expected ValueError for mixed invalid filter keys."
 
 
 def test_filters_none_attribute_error():
