@@ -71,7 +71,7 @@ class Chrono24:
         self.url = get_response(query_url + "&" + self.filters.parameters).url
         self.count = self._get_listings().count
 
-    def standard_search(self, limit=None):
+    def search(self, limit=None):
         """Perform a standard search using the _search method with an optional limit.
 
         Args:
