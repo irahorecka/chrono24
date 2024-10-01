@@ -108,47 +108,31 @@ def _get_tenacity_wrapped_response(*args, max_attempts=8, **kwargs):
 
 
 def _generate_dom_specific_header():
-    """Generates high-quality DOM-specific HTTP header using the Faker library, ensuring maximum authenticity
-    and variability to mimic real browser behavior.
+    """Generates a simplified DOM-specific HTTP header using the Faker library.
 
     Returns:
         dict: A dictionary containing dynamically generated HTTP headers.
     """
-    # Initialize Faker instance
+    # Initialize Faker
     faker = Faker()
-    # Generate a realistic User-Agent and associated fields using the available methods
-    user_agent = faker.user_agent()
-    # Use available platform tokens and operating system attributes from Faker
-    platform_token = faker.random_element(
-        elements=[
-            faker.windows_platform_token(),
-            faker.linux_platform_token(),
-            faker.mac_platform_token(),
-        ]
-    )
-    # Generate the headers using only the Faker methods listed in the provided attribute list
+    # Static headers with dynamic tweaks for slight variations
     headers = {
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-        "Accept-Encoding": "gzip, deflate, br",  # Commonly supported encoding formats in browsers
-        "Accept-Language": faker.language_code(),  # Use language_code to generate values like 'en', 'de', etc.
-        "Cache-Control": "no-cache, no-store, must-revalidate",  # Ensure no caching for the request
-        "Connection": "keep-alive",  # Standard for persistent connections
-        "DNT": "1" if faker.boolean() else "0",  # Do Not Track: 1 or 0
-        "Host": faker.domain_name(),  # Simulate a real host domain
-        "Origin": faker.uri(),  # Generate an origin header using a realistic URI
-        "Pragma": "no-cache",  # Prevent any caching
-        "Referer": faker.url(),  # Generates a referer URL to simulate legitimate navigation
-        "Sec-CH-UA": f'"{user_agent}";v="{faker.random_int(80, 116)}", "{platform_token}";v="{faker.random_int(80, 116)}"',
-        "Sec-CH-UA-Mobile": "?0",  # Indicates a desktop environment
-        "Sec-CH-UA-Platform": f'"{platform_token}"',  # Randomized platform token from Faker
-        "Sec-Fetch-Dest": "document",  # Specifies that the resource is a document
-        "Sec-Fetch-Mode": "navigate",  # Request made by navigating
-        "Sec-Fetch-Site": "same-origin",  # Indicates request is from the same origin
-        "Sec-Fetch-User": "?1",  # User-initiated navigation
-        "TE": "Trailers",  # HTTP Transfer-Encoding
-        "Upgrade-Insecure-Requests": "1",  # Requests secure (HTTPS) versions
-        "User-Agent": user_agent,  # Use the same user-agent string as generated earlier
-        "X-Forwarded-For": faker.ipv4_public(),  # Generate a realistic public IP address
-        "Authorization": f"Bearer {faker.uuid4()}",  # Simulate a Bearer token using a UUID
+        "accept": "*/*",
+        "accept-encoding": "gzip, deflate",
+        "accept-language": faker.random_element(
+            elements=["pt-PT,pt;q=0.9,en-US;q=0.8,en;q=0.7", "en-US,en;q=0.9,fr-FR;q=0.8,fr;q=0.7"]
+        ),
+        "cookie": f"uid={faker.uuid4()}",  # Dynamic UID for each session
+        "referer": faker.url(),  # Dynamic referer URL
+        "sec-ch-ua": f'" Not A;Brand";v="99", "Chromium";v="{faker.random_int(90, 100)}", "Google Chrome";v="{faker.random_int(90, 100)}"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": f'"{faker.random_element(elements=["Windows", "Linux", "macOS"])}"',  # Randomize platform
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "same-origin",
+        "user-agent": faker.user_agent(),  # Generate a realistic User-Agent string
     }
+    # Optional: Add minor headers to further mimic real requests
+    headers["X-Requested-With"] = faker.random_element(elements=["XMLHttpRequest", "Fetch"])
+    headers["Pragma"] = "no-cache"  # Prevents caching
     return headers
