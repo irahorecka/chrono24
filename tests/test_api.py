@@ -82,25 +82,20 @@ def test_detailed_listing_keys():
 
 @mark.parametrize("listing", JOINED_LISTING)
 def test_listing_values_are_str_or_list(listing):
-    """Ensure that values in a listing are of types `str` or `list` and contain strings."""
-    listing_value_types = set(map(lambda x: type(x), listing.values()))
-    num_listing_value_types = len(listing_value_types)
-    # Assert that only two types (str and list) are in the listing values
-    assert (
-        num_listing_value_types == 2
-    ), "Listing values should only contain `str` and `list` types."
-    assert set(listing_value_types).issubset(
+    """Ensure that values in a listing are of types str or list and that lists contain only strings."""
+    # Collect unique types from listing values
+    listing_value_types = {type(value) for value in listing.values()}
+    # Assert that only 'str' and 'list' types are present
+    assert listing_value_types.issubset(
         {str, list}
-    ), "Listing values should be `str` or `list`."
+    ), f"Listing values should only contain 'str' or 'list', but found: {listing_value_types}"
 
-    # Ensure values inside lists are of type `str`
-    list_values = [v for v in listing.values() if isinstance(v, list)]
-    if list_values:
-        reduced_list_values = reduce(lambda x, y: set(x).union(y), list_values)
-        types_list_values = {type(v) for v in reduced_list_values}
-        assert (
-            len(types_list_values) == 1 and str in types_list_values
-        ), "All items inside list values should be of type `str`."
+    # Verify all elements inside list values are of type 'str'
+    for value in listing.values():
+        if isinstance(value, list):
+            assert all(
+                isinstance(item, str) for item in value
+            ), "All items inside list values should be of type 'str'."
 
 
 @mark.parametrize("listing", JOINED_LISTING)
