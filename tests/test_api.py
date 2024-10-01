@@ -89,7 +89,6 @@ def test_listing_values_are_str_or_list(listing):
     assert listing_value_types.issubset(
         {str, list}
     ), f"Listing values should only contain 'str' or 'list', but found: {listing_value_types}"
-
     # Verify all elements inside list values are of type 'str'
     for value in listing.values():
         if isinstance(value, list):

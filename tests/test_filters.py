@@ -125,3 +125,21 @@ def test_show_method(capsys):
         "Total number of categories" in captured.out
     ), "Expected total number of categories in output."
     assert "Case" in captured.out, "Expected 'Case' category to be displayed."
+
+
+def test_filters_key_consistency():
+    """Ensure that the combined filter dictionary contains all keys from individual categories
+    without overriding and that the key counts match."""
+    all_filters_combined_keys = set(Filters.all_filters.keys())
+    individual_category_keys = set()
+    for category, filters in Filters.all_filters_by_category.items():
+        individual_category_keys.update(filters.keys())
+
+    # Assert that the combined keys are identical to the collected individual keys
+    assert (
+        all_filters_combined_keys == individual_category_keys
+    ), "Mismatch between combined filters and individual categories"
+    # Check that the key counts match
+    assert len(all_filters_combined_keys) == len(
+        individual_category_keys
+    ), "Key counts between combined filters and individual categories do not match"
