@@ -66,11 +66,11 @@ for listing in rolex_dj.search(limit=25):
     print(listing)
 
 # Search for detailed listings
-for detailed_listing in rolex_dj.search_detail(limit=25):
+for detailed_listing in rolex_dj.detailed_search(limit=25):
     print(detailed_listing)
 ```
 
-**Note:** When using these functions, be cautious not to overwhelm Chrono24 with excessive requests. The `search` method consumes 1 request per 120 posts retrieved, while `search_detail` utilizes 1 request per individual post. Avoid flooding requests to maintain a balanced usage of the Chrono24 service and prevent any potential access limitations.
+**Note:** When using these functions, be cautious not to overwhelm Chrono24 with excessive requests. The `standard_search` method consumes 1 request per 120 posts retrieved, while `detailed_search` utilizes 1 request per individual post. Avoid flooding requests to maintain a balanced usage of the Chrono24 service and prevent any potential access limitations.
 
 ## API Outputs
 
@@ -93,7 +93,7 @@ Example output from `.search`:
 }
 ```
 
-Example output from `.search_detail`, which extends results from `.search`:
+Example output from `.detailed_search`, which extends results from `.search`:
 
 ```python
 {
@@ -130,7 +130,7 @@ Example output from `.search_detail`, which extends results from `.search`:
 }
 ```
 
-**Note:** Output keys in `.search` will always be constant, but `.search_detail` can vary based on information provided by the listing page, expanding on the details retrieved by `.search`.
+**Note:** Output keys in `.search` will always be constant, but `.detailed_search` can vary based on information provided by the listing page, expanding on the details retrieved by `.search`.
 
 ## Filters
 
@@ -144,13 +144,13 @@ To use filters, specify them when creating a query using the `filters` argument.
 import chrono24
 
 # Initialize a query with a single filter
-filtered_query = chrono24.query("Rolex DateJust", filters="steel")
+steel_rolex_dj = chrono24.query("Rolex DateJust", filters="steel")
 # Initialize a query with multiple filters
-filtered_query = chrono24.query("Rolex DateJust", filters=["steel", "automatic"])
+steel_auto_rolex_dj = chrono24.query("Rolex DateJust", filters=["steel", "automatic"])
 # Initialize a query with year constraints
-filtered_query = chrono24.query("Rolex DateJust", min_year=2010, max_year=2020)
+new_rolex_dj = chrono24.query("Rolex DateJust", min_year=2010, max_year=2020)
 # Combine filters and year constraints
-filtered_query = chrono24.query("Rolex DateJust", filters=["steel", "automatic"], min_year=2010, max_year=2020)
+new_steel_auto_rolex_dj = chrono24.query("Rolex DateJust", filters=["steel", "automatic"], min_year=2010, max_year=2020)
 ```
 
 ### Available Filter Categories
