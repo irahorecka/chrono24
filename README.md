@@ -1,5 +1,11 @@
 # chrono24
 
+<p align="center">
+  <img src="https://i.imgur.com/GzeQ0hp.png" width="50%" />
+</p>
+
+<br>
+
 [Chrono24](https://www.chrono24.com/) API wrapper
 
 [![pypiv](https://img.shields.io/pypi/v/chrono24.svg)](https://pypi.python.org/pypi/chrono24)
