@@ -42,7 +42,7 @@ STANDARD_LISTING_KEYS = {
 
 
 def test_attrs():
-    """Test for checking attributes of the Chrono24 query object."""
+    """Test for checking attributes of the QueryChrono24 query object."""
     assert isinstance(ROLEX_DJ.count, int), "Count should be an integer."
     assert isinstance(ROLEX_DJ.url, str), "URL should be a string."
     assert isinstance(DEFAULT_QUERY.count, int), "Count should be an integer for default query."
