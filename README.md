@@ -1,7 +1,7 @@
 # chrono24
 
 <p align="center">
-  <img src="https://static.chrono24.com/images/default/logo-positive-reduced.svg" width="50%" />
+  <img src="https://i.imgur.com/GzeQ0hp.png" width="50%" />
 </p>
 
 <br>
