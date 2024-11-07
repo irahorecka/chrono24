@@ -47,7 +47,7 @@ def get_html_tag_attribute_as_text(html_tag, attr):
     return html_tag_text or NULL_VALUE
 
 
-class QueryChrono24:
+class Query:
     """A class for performing searches on Chrono24."""
 
     page_size = 120
