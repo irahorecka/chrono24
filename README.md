@@ -21,8 +21,6 @@ To get started:
 1. Follow the [installation guide](https://github.com/FlareSolverr/FlareSolverr#Installation) to spin up the Docker container.  
 2. Route your API requests through FlareSolverr to retrieve the desired HTML content.  
 
-This approach has been tested and works as of now.  
-
 ## Installation
 
 ```bash
