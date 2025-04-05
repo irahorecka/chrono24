@@ -10,7 +10,7 @@
 
 [![pypiv](https://img.shields.io/pypi/v/chrono24.svg)](https://pypi.python.org/pypi/chrono24)
 [![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
-[![continuous-integration](https://github.com/irahorecka/chrono24/actions/workflows/ci.yaml/badge.svg)](https://github.com/irahorecka/chrono24/actions)
+[![tests](https://github.com/irahorecka/chrono24/actions/workflows/ci.yaml/badge.svg)](https://github.com/irahorecka/chrono24/actions)
 [![Licence](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/irahorecka/chrono24/main/LICENSE)
 
 ## Dealing with Cloudflare Restrictions  
