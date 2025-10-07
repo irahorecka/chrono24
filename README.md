@@ -13,7 +13,10 @@
 [![tests](https://github.com/irahorecka/chrono24/actions/workflows/ci.yaml/badge.svg)](https://github.com/irahorecka/chrono24/actions)
 [![Licence](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/irahorecka/chrono24/main/LICENSE)
 
-## Dealing with Cloudflare Restrictions  
+## Dealing with Cloudflare Restrictions
+
+> [!WARNING]
+> **Cloudflare anti-bot protection blocks direct API access.**
 
 If you encounter issues retrieving listings from Chrono24 due to Cloudflare’s anti-scraping measures, consider using [FlareSolverr](https://github.com/FlareSolverr/FlareSolverr). This open-source proxy solution bypasses Cloudflare’s protections.  
 
